@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\c\u002B\u002B_programs\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\",
+  "WorkspaceRootPath": "C:\\Users\\awbur\\OneDrive\\Documents\\GitHub\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D65EE48D-6E2C-4677-990C-CF276D604FBE}|Three-Body-Problem-2D-Collab.vcxproj|C:\\c\u002B\u002B_programs\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{D65EE48D-6E2C-4677-990C-CF276D604FBE}|Three-Body-Problem-2D-Collab.vcxproj|C:\\Users\\awbur\\OneDrive\\Documents\\GitHub\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D65EE48D-6E2C-4677-990C-CF276D604FBE}|Three-Body-Problem-2D-Collab.vcxproj|solutionrelative:ThreeBodyMain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -20,11 +20,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "ThreeBodyMain.cpp",
-              "DocumentMoniker": "C:\\c\u002B\u002B_programs\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp",
+              "DocumentMoniker": "C:\\Users\\awbur\\OneDrive\\Documents\\GitHub\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp",
               "RelativeDocumentMoniker": "ThreeBodyMain.cpp",
-              "ToolTip": "C:\\c\u002B\u002B_programs\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp",
-              "RelativeToolTip": "ThreeBodyMain.cpp",
-              "ViewState": "AgIAAFcAAAAAAAAAAAAAAGoAAAAuAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\awbur\\OneDrive\\Documents\\GitHub\\Three-Body-Problem-2D-Collab\\Three-Body-Problem-2D-Collab\\ThreeBodyMain.cpp*",
+              "RelativeToolTip": "ThreeBodyMain.cpp*",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAADUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-10-27T17:56:03.916Z",
               "EditorCaption": ""

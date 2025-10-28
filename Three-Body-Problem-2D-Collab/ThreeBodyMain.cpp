@@ -46,6 +46,12 @@ int WINAPI WinMain(
 		return 1;
 	}
 
+	HWND myconsole = GetConsoleWindow();
+	//Get a handle to device context
+	HDC mydc = GetDC(myconsole);
+	SetPixel(mydc, 10, 10, RGB(255, 0, 0)); // Example usage of SetPixel
+	SetPixel(mydc, 11, 10, RGB(255, 0, 0)); // Example usage of SetPixel
+
 	// The parameters to CreateWindowEx explained:
 	// WS_EX_OVERLAPPEDWINDOW : An optional extended window style.
 	// szWindowClass: the name of the application
