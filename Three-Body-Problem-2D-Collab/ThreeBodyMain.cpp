@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <iostream>
 #include <gdiplus.h>
+#pragma comment (lib,"Gdiplus.lib")
 
 //Globals
 // The main window class name.
@@ -15,13 +16,7 @@ HINSTANCE hInst;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK ProcessMessages(HWND, UINT, WPARAM, LPARAM);
-VOID OnPaint(HDC hdc)
-{
-	Gdiplus::Graphics graphics(hdc);
-	Gdiplus::Pen      pen(Gdiplus::Color(255, 0, 0, 255));
-	graphics.DrawLine(&pen, 0, 0, 200, 100);
-}
-
+VOID OnPaint(HDC hdc);
 
 int WINAPI WinMain(
 	_In_ HINSTANCE hInstance,
@@ -46,37 +41,20 @@ int WINAPI WinMain(
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
-	if (!RegisterClassEx(&wcex))
-	{
-		MessageBox(NULL,
-			_T("Call to RegisterClassEx failed!"),
-			_T("Windows Desktop Guided Tour"),
-			NULL);
+	RegisterClassEx(&wcex);
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-		return 1;
-	}
-	// The parameters to CreateWindowEx explained:
-	// WS_EX_OVERLAPPEDWINDOW : An optional extended window style.
-	// szWindowClass: the name of the application
-	// szTitle: the text that appears in the title bar
-	// WS_OVERLAPPEDWINDOW: the type of window to create
-	// CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-	// 500, 100: initial size (width, height)
-	// NULL: the parent of this window
-	// NULL: this application does not have a menu bar
-	// hInstance: the first parameter from WinMain
-	// NULL: not used in this application
 	HWND hWnd = CreateWindowEx(
-		WS_EX_OVERLAPPEDWINDOW,
-		szWindowClass,
-		szTitle,
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		1000, 500,
-		NULL,
-		NULL,
-		hInstance,
-		NULL
+		WS_EX_OVERLAPPEDWINDOW, //style
+		szWindowClass, //name of application
+		szTitle, //text in title bar
+		WS_OVERLAPPEDWINDOW, //type of window to create
+		CW_USEDEFAULT, CW_USEDEFAULT, //initial position (x, y)
+		1000, 500, //initial size (width, height)
+		NULL, //parent window
+		NULL, //menu
+		hInstance, //instance handle
+		NULL //creation parameters
 	);
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
@@ -93,7 +71,7 @@ int WINAPI WinMain(
 		DispatchMessage(&msg);
 	}
 	Gdiplus::GdiplusShutdown(gdiplusToken);
-	return (int)msg.wParam;
+	return msg.wParam; //int
 };
 
 LRESULT CALLBACK ProcessMessages(
@@ -124,3 +102,9 @@ LRESULT CALLBACK ProcessMessages(
 	return 0;
 };
 
+VOID OnPaint(HDC hdc)
+{
+	Gdiplus::Graphics graphics(hdc);
+	Gdiplus::Pen      pen(Gdiplus::Color(255, 0, 0, 255));
+	graphics.DrawLine(&pen, 0, 0, 200, 100);
+}
