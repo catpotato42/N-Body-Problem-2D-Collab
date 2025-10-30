@@ -24,17 +24,19 @@ struct State {
 class Calculations {
 public:
 	//initial constructor of our calculations, after this our values for each planet are set by user input.
-	Calculations(int planets, int fps)
+	Calculations(int planets, int fps, int simLength) //simLength in seconds
 		: initialState(planets) //construct initial state
 	{
 		this->timeStep = 1000 / fps; //fps to ms
+		this->simLength = 1000 * simLength; //seconds to ms
 	};
+	int timeStep; //in ms
+	int simLength; //in ms
+	//Function that sets initial values for each planet based on user input.
+	void setInitialValues(std::vector<PlanetInfo> initVals);
+	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).
+
+private:
 	//struct holding an array of planet infos.
 	State initialState;
-	//Function that sets initial values for each planet based on user input.
-	void setInitialValues(std::vector<PlanetInfo> initVals) {
-		initialState.states = initVals;
-	}
-	int timeStep; //in ms
-	//Function to step our ODE taking in and outputting an array of State structs for each timestep.
 };
