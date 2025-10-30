@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <iostream>
 #include <gdiplus.h>
+#include "Calculations.h"
 #pragma comment (lib,"Gdiplus.lib") //tells linker to add gdiplus lib automatically
 
 //Globals
@@ -11,6 +12,9 @@ static TCHAR szWindowClass[] = _T("NBodyApp");
 static TCHAR szTitle[] = _T("I'm a window!");
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
 static const int frameTime = 17;
+//Handles to windows we create on init.
+HWND hLabel1, hLabel2, hLabel3, hEdit1, hEdit2, hEdit3, hButton;
+
 
 //Stored instance handle for use in Win32 API calls
 HINSTANCE hInst;
@@ -96,6 +100,22 @@ LRESULT CALLBACK ProcessMessages(
 
 	switch (message)
 	{
+	case WM_CREATE:
+		hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			10, 10, 50, 25, hWnd, (HMENU)1, nullptr, nullptr);
+		hLabel2 = CreateWindowEx(0, L"STATIC", L"Fps (recommended 60)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			10, 45, 50, 25, hWnd, (HMENU)2, nullptr, nullptr);
+		hLabel3 = CreateWindowEx(0, L"STATIC", L"Sim length (s)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			10, 80, 50, 25, hWnd, (HMENU)3, nullptr, nullptr);
+		hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			60, 10, 150, 25, hWnd, (HMENU)4, nullptr, nullptr);
+		hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			60, 45, 150, 25, hWnd, (HMENU)5, nullptr, nullptr);
+		hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+			60, 80, 150, 25, hWnd, (HMENU)6, nullptr, nullptr);
+		hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+			10, 115, 100, 30, hWnd, (HMENU)7, nullptr, nullptr);
+		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		OnPaint(hdc);
@@ -106,6 +126,24 @@ LRESULT CALLBACK ProcessMessages(
 		return 0;
 	case WM_TIMER:
 
+	case WM_COMMAND:
+		switch(LOWORD(wParam))
+		{
+		case 4:
+			// Destroy first screen
+			DestroyWindow(hLabel1);
+			DestroyWindow(hLabel2);
+			DestroyWindow(hLabel3);
+			DestroyWindow(hEdit1);
+			DestroyWindow(hEdit2);
+			DestroyWindow(hEdit3);
+			DestroyWindow(hButton);
+			break;
+		default:
+			//error
+			MessageBox(hWnd, L"Button command not recognized", L"Error", MB_OK | MB_ICONERROR);
+			break;
+		}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
