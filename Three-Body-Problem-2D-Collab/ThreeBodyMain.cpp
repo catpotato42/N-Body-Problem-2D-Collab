@@ -11,8 +11,6 @@ static TCHAR szWindowClass[] = _T("NBodyApp");
 static TCHAR szTitle[] = _T("I'm a window!");
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
 static const int frameTime = 17;
-//Array of radii given by Calculations.cpp file
-
 
 //Stored instance handle for use in Win32 API calls
 HINSTANCE hInst;
