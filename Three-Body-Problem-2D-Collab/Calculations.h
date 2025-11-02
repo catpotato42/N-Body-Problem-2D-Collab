@@ -36,7 +36,7 @@ public:
 		initialState.states = initVals;
 	}
 	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).
-	std::vector<State> solve() {
+	/*std::vector<State> solve() {
 		for(int k = 0; k < simLength; k += timeStep) {
 			for(int i = 0; i < planets; i++) {
 				for (int j = 0; j < planets; j++) {
@@ -61,10 +61,10 @@ public:
 				}
 			}
 			
-			
 		}
-		return 
-	}
+		//return
+		return std::vector<State>{initialState};
+	}*/
 private:
 	//struct holding an array of planet infos.
 	double G = 6.67430e-11; //gravitational constant

@@ -13,15 +13,19 @@ static TCHAR szTitle[] = _T("I'm a window!");
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
 static const int frameTime = 17;
 //Handles to windows we create on init.
-HWND hLabel1, hLabel2, hLabel3, hEdit1, hEdit2, hEdit3, hButton;
-
+HWND hLabel1, hLabel2, hLabel3, hEdit1, hEdit2, hEdit3, hButton, hErrorMsg;
+//Window dimensions
+static const int windowLength = 1000;
+static const int windowHeight = 500;
+static const int centerX = (windowLength / 2) - 110; //used for initial screen
 
 //Stored instance handle for use in Win32 API calls
 HINSTANCE hInst;
 
-//Forward declarations
+//Forward declarations when funcs are called before definition
 LRESULT CALLBACK ProcessMessages(HWND, UINT, WPARAM, LPARAM);
-VOID OnPaint(HDC hdc);
+void OnPaint(HDC hdc);
+void DestroyIfValid();
 
 int WINAPI WinMain(
 	_In_ HINSTANCE hInstance,
@@ -58,7 +62,7 @@ int WINAPI WinMain(
 		szTitle, //text in title bar
 		WS_OVERLAPPEDWINDOW, //type of window to create
 		CW_USEDEFAULT, CW_USEDEFAULT, //initial position (x, y)
-		1000, 500, //initial size (width, height)
+		windowLength, windowHeight, //initial size (width, height)
 		NULL, //parent window
 		NULL, //menu
 		hInstance, //instance handle
@@ -80,12 +84,11 @@ int WINAPI WinMain(
 	//main loop
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		//Function that runs 60 fps: 17 ms is ~60 fps
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 	Gdiplus::GdiplusShutdown(gdiplusToken);
-	return msg.wParam; //int
+	return (int)msg.wParam; //int
 };
 
 LRESULT CALLBACK ProcessMessages(
@@ -101,21 +104,24 @@ LRESULT CALLBACK ProcessMessages(
 	switch (message)
 	{
 	case WM_CREATE:
-		hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			10, 10, 50, 25, hWnd, (HMENU)1, nullptr, nullptr);
-		hLabel2 = CreateWindowEx(0, L"STATIC", L"Fps (recommended 60)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			10, 45, 50, 25, hWnd, (HMENU)2, nullptr, nullptr);
-		hLabel3 = CreateWindowEx(0, L"STATIC", L"Sim length (s)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			10, 80, 50, 25, hWnd, (HMENU)3, nullptr, nullptr);
-		hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			60, 10, 150, 25, hWnd, (HMENU)4, nullptr, nullptr);
-		hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			60, 45, 150, 25, hWnd, (HMENU)5, nullptr, nullptr);
-		hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-			60, 80, 150, 25, hWnd, (HMENU)6, nullptr, nullptr);
+	{
+		//Create ctrls
+		hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 10, 160, 25, hWnd, (HMENU)1, nullptr, nullptr);
+		hLabel2 = CreateWindowEx(0, L"STATIC", L"Fps (60 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 45, 160, 25, hWnd, (HMENU)2, nullptr, nullptr);
+		hLabel3 = CreateWindowEx(0, L"STATIC", L"Sim length (s)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 80, 160, 25, hWnd, (HMENU)3, nullptr, nullptr);
+		hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 10, 60, 25, hWnd, (HMENU)4, nullptr, nullptr);
+		hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 45, 60, 25, hWnd, (HMENU)5, nullptr, nullptr);
+		hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 80, 60, 25, hWnd, (HMENU)6, nullptr, nullptr);
 		hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
-			10, 115, 100, 30, hWnd, (HMENU)7, nullptr, nullptr);
+			centerX + 160, 115, 60, 30, hWnd, (HMENU)7, nullptr, nullptr);
 		break;
+	}
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		OnPaint(hdc);
@@ -125,24 +131,10 @@ LRESULT CALLBACK ProcessMessages(
 		PostQuitMessage(0);
 		return 0;
 	case WM_TIMER:
-
+		//Function that runs 60 fps: 17 ms is ~60 fps
 	case WM_COMMAND:
-		switch(LOWORD(wParam))
-		{
-		case 4:
-			// Destroy first screen
-			DestroyWindow(hLabel1);
-			DestroyWindow(hLabel2);
-			DestroyWindow(hLabel3);
-			DestroyWindow(hEdit1);
-			DestroyWindow(hEdit2);
-			DestroyWindow(hEdit3);
-			DestroyWindow(hButton);
-			break;
-		default:
-			//error
-			MessageBox(hWnd, L"Button command not recognized", L"Error", MB_OK | MB_ICONERROR);
-			break;
+		if (LOWORD(wParam) == 7) { //If button pressed (7 is HMENU ID)
+			DestroyIfValid();
 		}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -151,10 +143,63 @@ LRESULT CALLBACK ProcessMessages(
 	return 0;
 };
 
-VOID OnPaint(HDC hdc)
+void OnPaint(HDC hdc)
 {
-	Gdiplus::Graphics graphics(hdc);
-	Gdiplus::Pen      pen(Gdiplus::Color(255, 0, 0, 255));
-	graphics.DrawLine(&pen, 0, 0, 200, 100);
 }
 
+bool IsValidNumberEntry(HWND textBox) {
+	int length = GetWindowTextLength(textBox);
+	char szBuf[2048];
+	LONG lResult;
+	lResult = GetWindowTextA(textBox, szBuf, length + 1);
+	//don't want any negatives or zeroes, so we can iterate through and check the string
+	bool allZeroes = true;
+	for (int i = 0; i < length; i++) {
+		if (!std::isdigit(szBuf[i])) {
+			if (hErrorMsg != NULL) {
+				DestroyWindow(hErrorMsg);
+			}
+			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+				centerX, 115, 150, 35, GetParent(textBox), (HMENU)1, nullptr, nullptr);
+			return false;
+		}
+		if (szBuf[i] != '0') {
+			allZeroes = false;
+		}
+	}
+	if (length == 0) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 115, 150, 35, GetParent(textBox), (HMENU)1, nullptr, nullptr);
+		return false;
+	}
+	//This is after length so it doesn't give the error for empty box
+	if (allZeroes) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 115, 150, 35, GetParent(textBox), (HMENU)1, nullptr, nullptr);
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+void DestroyIfValid() {
+	if (IsValidNumberEntry(hEdit1) && IsValidNumberEntry(hEdit2) && IsValidNumberEntry(hEdit3)) {
+		DestroyWindow(hLabel1);
+		DestroyWindow(hLabel2);
+		DestroyWindow(hLabel3);
+		DestroyWindow(hEdit1);
+		DestroyWindow(hEdit2);
+		DestroyWindow(hEdit3);
+		DestroyWindow(hButton);
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+	}
+}
