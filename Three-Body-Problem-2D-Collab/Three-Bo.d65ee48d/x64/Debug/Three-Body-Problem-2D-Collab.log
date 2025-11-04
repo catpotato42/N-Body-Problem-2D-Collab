@@ -1,13 +1,65 @@
 ﻿  ThreeBodyMain.cpp
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(188,12): warning C4244: 'initializing': conversion from 'LONG_PTR' to 'int', possible loss of data
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(359,62): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(361,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(363,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(365,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(367,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(368,25): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(370,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(372,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(374,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(376,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-  Three-Body-Problem-2D-Collab.vcxproj -> C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\x64\Debug\Three-Body-Problem-2D-Collab.exe
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(58,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(59,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(62,66): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(63,66): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(185,12): warning C4244: 'initializing': conversion from 'LONG_PTR' to 'int', possible loss of data
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(331,20): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(334,27): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(386,62): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(388,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(390,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(392,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(394,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(395,25): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(397,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(399,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(401,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(403,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(467,8): warning C4101: 'szBufMass': unreferenced local variable
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(465,8): warning C4101: 'szBufXVel': unreferenced local variable
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(466,8): warning C4101: 'szBufYVel': unreferenced local variable
+C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(464,8): warning C4101: 'szBufYPos': unreferenced local variable
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,82): error C2512: 'PlanetInfo::PlanetInfo': no appropriate default constructor available
+  (compiling source file 'ThreeBodyMain.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,82):
+      while trying to match the argument list '()'
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,82):
+      the template instantiation context (the oldest one first) is
+          C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(24,26):
+          see reference to class template instantiation 'std::vector<PlanetInfo,std::allocator<PlanetInfo>>' being compiled
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(1628,23):
+          while compiling class template member function 'void std::vector<PlanetInfo,std::allocator<PlanetInfo>>::resize(const unsigned __int64)'
+              C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(22,16):
+              see the first reference to 'std::vector<PlanetInfo,std::allocator<PlanetInfo>>::resize' in 'State::State'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(1630,9):
+          see reference to function template instantiation 'void std::vector<PlanetInfo,std::allocator<PlanetInfo>>::_Resize<std::_Value_init_tag>(const unsigned __int64,const _Ty2 &)' being compiled
+          with
+          [
+              _Ty2=std::_Value_init_tag
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(1618,27):
+          see reference to function template instantiation 'PlanetInfo *std::_Uninitialized_value_construct_n<std::allocator<PlanetInfo>>(PlanetInfo *,unsigned __int64,_Alloc &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<PlanetInfo>
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(2094,18):
+          see reference to function template instantiation 'void std::_Uninitialized_backout_al<std::allocator<PlanetInfo>>::_Emplace_back<>(void)' being compiled
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(1844,35):
+          see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,>(_Alloc &,_Objty *const )' being compiled
+          with
+          [
+              _Alloc=std::allocator<PlanetInfo>,
+              _Ty=PlanetInfo,
+              _Objty=PlanetInfo
+          ]
+  
