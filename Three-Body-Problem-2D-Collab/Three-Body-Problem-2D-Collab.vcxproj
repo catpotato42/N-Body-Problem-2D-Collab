@@ -124,8 +124,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Calculations.cpp" />
-    <ClCompile Include="test.cpp" />
     <ClCompile Include="ThreeBodyMain.cpp" />
   </ItemGroup>
   <ItemGroup>

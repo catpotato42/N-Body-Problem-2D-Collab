@@ -1,7 +1,9 @@
 #include <windows.h>
-#include <tchar.h>
 #include <iostream>
+#include <string>
+#include <tchar.h>
 #include <gdiplus.h>
+#include "Calculations.h"
 #pragma comment (lib,"Gdiplus.lib") //tells linker to add gdiplus lib automatically
 
 //Globals
@@ -9,15 +11,38 @@
 static TCHAR szWindowClass[] = _T("NBodyApp");
 //Title bar text
 static TCHAR szTitle[] = _T("I'm a window!");
+//Handles to windows we create on init.
+HWND hLabel1, hLabel2, hLabel3, hEdit1, hEdit2, hEdit3, hButton, hErrorMsg;
+//Handles to windows for planet initial value inputs will be created later dynamically and stored here.
+std::vector<HWND> planetLabels;
+std::vector<HWND> planetInputBoxes; //x-pos, y-pos, x-vel, y-vel, mass
+//Old edit proc for subclassed edit control
+std::vector<WNDPROC> oldProcs;
+HWND hStartSimButton;
+//number of planets
+int numPlanets;
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
-static const int frameTime = 17;
-
+int frameTime;
+//Sim length (ms)
+float simLength;
+//Window dimensions
+static const int windowLength = 1000;
+static const int windowHeight = 500;
+static int centerX = (windowLength / 2) - 110; //used for initial screen && error msg positioning
+//Current phase tracker
+enum phaseTracker { CREATION, INITIALVALS, SIMULATION};
+phaseTracker currPhase = CREATION;
 //Stored instance handle for use in Win32 API calls
 HINSTANCE hInst;
+//Calculations class
+Calculations* solveIVP = NULL;
 
-//Forward declarations
+//Forward declarations when funcs are called before definition
 LRESULT CALLBACK ProcessMessages(HWND, UINT, WPARAM, LPARAM);
-VOID OnPaint(HDC hdc);
+LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lParam);
+void OnPaint(HDC hdc);
+bool DestroyIfValid();
+void CreatePlanetInitialValues(HWND hWnd);
 
 int WINAPI WinMain(
 	_In_ HINSTANCE hInstance,
@@ -54,7 +79,7 @@ int WINAPI WinMain(
 		szTitle, //text in title bar
 		WS_OVERLAPPEDWINDOW, //type of window to create
 		CW_USEDEFAULT, CW_USEDEFAULT, //initial position (x, y)
-		1000, 500, //initial size (width, height)
+		windowLength, windowHeight, //initial size (width, height)
 		NULL, //parent window
 		NULL, //menu
 		hInstance, //instance handle
@@ -67,21 +92,15 @@ int WINAPI WinMain(
 	//Get a handle to device context
 	HDC mydc = GetDC(myconsole);
 
-	SetTimer(hWnd, 0, // Handle to window, ID
-		frameTime,                 // 1000/fps timer interval
-		(TIMERPROC)NULL);     // no timer callback 
-
-
 	MSG msg;
 	//main loop
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		//Function that runs 60 fps: 17 ms is ~60 fps
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 	Gdiplus::GdiplusShutdown(gdiplusToken);
-	return msg.wParam; //int
+	return (int)msg.wParam; //int
 };
 
 LRESULT CALLBACK ProcessMessages(
@@ -96,6 +115,37 @@ LRESULT CALLBACK ProcessMessages(
 
 	switch (message)
 	{
+	case WM_CREATE:
+	{
+		//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
+		hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 10, 160, 25, hWnd, (HMENU)1, NULL, NULL);
+		hLabel2 = CreateWindowEx(0, L"STATIC", L"Fps (60 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 45, 160, 25, hWnd, (HMENU)2, NULL, NULL);
+		hLabel3 = CreateWindowEx(0, L"STATIC", L"Sim length (s)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 80, 160, 25, hWnd, (HMENU)3, NULL, NULL);
+		hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 10, 60, 25, hWnd, (HMENU)4, NULL, NULL);
+		hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 45, 60, 25, hWnd, (HMENU)5, NULL, NULL);
+		hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			centerX + 160, 80, 60, 25, hWnd, (HMENU)6, NULL, NULL);
+		hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+			centerX + 160, 115, 60, 30, hWnd, (HMENU)7, NULL, NULL);
+		SetWindowLongPtr(hEdit3, GWLP_USERDATA, 0);
+		WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit3, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+		oldProcs.push_back(oldProc);
+		return 0;
+	}
+	case WM_ERASEBKGND: {
+		//Redraw background in black every time InvalidateRect is called
+		HDC hdcErase = (HDC)wParam;
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		HBRUSH hBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+		FillRect(hdcErase, &rc, hBrush);
+		return 1; //1 for success
+	}
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		OnPaint(hdc);
@@ -105,7 +155,24 @@ LRESULT CALLBACK ProcessMessages(
 		PostQuitMessage(0);
 		return 0;
 	case WM_TIMER:
+		//Function that runs 60 fps: 17 ms is ~60 fps
+		InvalidateRect(hWnd, NULL, FALSE);
+		return 0;
+	case WM_COMMAND: {
+		if (LOWORD(wParam) == 7 && currPhase == CREATION) { //If Create button pressed (7 is HMENU ID)
+			bool nextPhase = DestroyIfValid();
+			if (nextPhase) {
+				//increment phase
+				currPhase = INITIALVALS;
+				InvalidateRect(hWnd, NULL, TRUE);
+				CreatePlanetInitialValues(hWnd);
+			}
+		}
+		else if (LOWORD(wParam) == 500 && currPhase == INITIALVALS) {
 
+		}
+		return 0;
+	}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -113,10 +180,211 @@ LRESULT CALLBACK ProcessMessages(
 	return 0;
 };
 
-VOID OnPaint(HDC hdc)
+void OnPaint(HDC hdc)
 {
-	Gdiplus::Graphics graphics(hdc);
-	Gdiplus::Pen      pen(Gdiplus::Color(255, 0, 0, 255));
-	graphics.DrawLine(&pen, 0, 0, 200, 100);
 }
 
+LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lParam) {
+	int index = GetWindowLongPtr(hEdit, GWLP_USERDATA); // store index during creation
+
+	switch (msg) {
+	case WM_CHAR: {
+		bool allowNeg = !(index % 5 == 0 || index % 5 == 1 || index % 5 == 4); //Negatives for velocity only
+		bool allowDecimal = (index % 5 == 2 || index % 5 == 3 || index % 5 == 4); //Decimals for velocity and mass only
+
+		if (isdigit(wParam) || wParam == VK_BACK)
+			return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
+
+		if (allowDecimal && wParam == '.' && SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0) > 0)
+			return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
+
+		if (allowNeg && wParam == '-' && SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0) == 0)
+			return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
+
+		return 0; //Ignore character
+	}
+	case WM_DESTROY:
+		SetWindowLongPtr(hEdit, GWLP_WNDPROC, (LONG_PTR)oldProcs[index]);
+		break;
+	}
+	return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
+}
+
+bool SpecialCaseForDecimals(HWND textBox, int startY) {
+	//Custom validation for sim length box to just see if it's all 0s
+	int length = GetWindowTextLength(textBox);
+	char szBuf[2048];
+	LONG lResult;
+	lResult = GetWindowTextA(textBox, szBuf, length + 1);
+	bool allZeroes = true;
+	for (int i = 0; i < length; i++) {
+		if (szBuf[i] != '0' && szBuf[i] != '.' && szBuf[i] != '-') {
+			allZeroes = false;
+		}
+	}
+	if (length == 0) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, startY, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+		return false;
+	}
+	if (allZeroes) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, startY, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+		return false;
+	}
+	return !allZeroes;
+}
+
+bool IsValidNumberEntry(HWND textBox) {
+	if (textBox == hEdit3) {
+		return SpecialCaseForDecimals(textBox, 115);
+	}
+	int length = GetWindowTextLength(textBox);
+	char szBuf[2048];
+	LONG lResult;
+	lResult = GetWindowTextA(textBox, szBuf, length + 1);
+	//don't want any negatives or decimals, so we can iterate through and check the string to make sure it's all digits
+	bool allZeroes = true;
+	for (int i = 0; i < length; i++) {
+		if (!std::isdigit(szBuf[i])) {
+			if (hErrorMsg != NULL) {
+				DestroyWindow(hErrorMsg);
+			}
+			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+				centerX, 115, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+			return false;
+		}
+		if (szBuf[i] != '0') {
+			allZeroes = false;
+		}
+	}
+	if (length == 0) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 115, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+		return false;
+	}
+	//This is after length so it doesn't give the error for empty box
+	if (allZeroes) {
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			centerX, 115, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+		return false;
+	}
+	if (textBox == hEdit1) {
+		//number of planets special case
+		int numPlanetsCheck = std::stoi(std::string(szBuf));
+		if (numPlanetsCheck < 2 || numPlanetsCheck > 10) {
+			if (hErrorMsg != NULL) {
+				DestroyWindow(hErrorMsg);
+			}
+			hErrorMsg = CreateWindowEx(0, L"STATIC", L"# of planets must be 2-10", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+				centerX, 115, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+			return false;
+		}
+	}
+	return true;
+
+}
+
+bool DestroyIfValid() {
+	if (IsValidNumberEntry(hEdit1) && IsValidNumberEntry(hEdit2) && IsValidNumberEntry(hEdit3)) {
+		//construct calculations class here
+		char szBuf1[2048];
+		char szBuf2[2048];
+		char szBuf3[2048];
+		int throwaway1 = GetWindowTextA(hEdit1, szBuf1, GetWindowTextLength(hEdit1) + 1);
+		int throwaway2 = GetWindowTextA(hEdit2, szBuf2, GetWindowTextLength(hEdit2) + 1);
+		int throwaway3 = GetWindowTextA(hEdit3, szBuf3, GetWindowTextLength(hEdit3) + 1);
+		numPlanets = std::stoi(std::string(szBuf1));
+		frameTime = 1000 / std::stoi(std::string(szBuf2));
+		simLength = 1000 * std::stof(std::string(szBuf3));
+		solveIVP = new Calculations(
+			numPlanets, frameTime, simLength
+		);
+		DestroyWindow(hLabel1);
+		DestroyWindow(hLabel2);
+		DestroyWindow(hLabel3);
+		DestroyWindow(hEdit1);
+		DestroyWindow(hEdit2);
+		DestroyWindow(hEdit3);
+		oldProcs.erase(oldProcs.begin());
+		DestroyWindow(hButton);
+		if (hErrorMsg != NULL) {
+			DestroyWindow(hErrorMsg);
+		}
+		return true;
+	}
+	return false;
+}
+
+void CreatePlanetInitialValues(HWND hWnd) {
+	//In case window was resized
+	RECT clientRect;
+	int clientWidth;
+	int clientHeight;
+	if (GetClientRect(hWnd, &clientRect)) {
+		clientWidth = clientRect.right;
+		clientHeight = clientRect.bottom;
+	}
+
+	//Labels and text boxes, 10 max planets so no need for fancy formatting
+	planetLabels.resize(numPlanets*5);
+	planetInputBoxes.resize(numPlanets*5);
+	oldProcs.resize(numPlanets * 5);
+
+	//Condition: window must be tall enough to fit one column of planet values + 30 for the button and wide enough to fit 10 columns.
+	std::pair<int, int> startingPixel = { 0,0 };
+	wchar_t buffer[256];
+	swprintf(buffer, 256, L"Enter initial values for each planet below. Positions are in pixels where top left is {0,0}, width = %d px and height = %d px", windowLength, windowHeight);
+	hLabel1 = CreateWindowEx(0, L"STATIC", buffer, WS_CHILD | WS_VISIBLE | ES_CENTER,
+		0, 0, 200, 35, hWnd, (HMENU)1, NULL, NULL);
+	startingPixel.second += 35; //move down for the inputs
+
+	for (int i = 0; i < numPlanets*5; i+=5) {
+		std::wstring number = std::to_wstring(i);
+		startingPixel = (startingPixel.second + 205 < clientHeight) ? std::pair<int,int> {startingPixel.first,startingPixel.second} 
+		: std::pair<int,int> {startingPixel.first + 220, 0}; //205 = 35*5 + 30 pixels button, 220 = length of label + input box + 10
+		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position:").c_str(), WS_CHILD | WS_VISIBLE | ES_CENTER,
+			startingPixel.first, startingPixel.second, 150, 35, hWnd, (HMENU)i, NULL, NULL);
+		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position:").c_str(), WS_CHILD | WS_VISIBLE | ES_CENTER,
+			startingPixel.first, startingPixel.second + 35, 150, 35, hWnd, (HMENU)i + 1, NULL, NULL);
+		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity:").c_str(), WS_CHILD | WS_VISIBLE | ES_CENTER,
+			startingPixel.first, startingPixel.second + 70, 150, 35, hWnd, (HMENU)i + 2, NULL, NULL);
+		planetLabels[i + 3] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-velocity:").c_str(), WS_CHILD | WS_VISIBLE | ES_CENTER,
+			startingPixel.first, startingPixel.second + 105, 150, 35, hWnd, (HMENU)i + 3, NULL, NULL);
+		planetLabels[i + 4] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" mass (in 10^24 kgs) (recommended 1-5 range):").c_str(), WS_CHILD | WS_VISIBLE | ES_CENTER,
+			startingPixel.first, startingPixel.second + 140, 150, 35, hWnd, (HMENU)i + 4, NULL, NULL);
+		planetInputBoxes[i] = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			startingPixel.first + 150, startingPixel.second, 60, 35, hWnd, (HMENU)i + 5, NULL, NULL);
+		planetInputBoxes[i + 1] = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			startingPixel.first + 150, startingPixel.second + 35, 60, 35, hWnd, (HMENU)i + 6, NULL, NULL);
+		planetInputBoxes[i + 2] = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			startingPixel.first + 150, startingPixel.second + 70, 60, 35, hWnd, (HMENU)i + 7, NULL, NULL);
+		planetInputBoxes[i + 3] = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			startingPixel.first + 150, startingPixel.second + 105, 60, 35, hWnd, (HMENU)i + 8, NULL, NULL);
+		planetInputBoxes[i + 4] = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+			startingPixel.first + 150, startingPixel.second + 140, 60, 35, hWnd, (HMENU)i + 9, NULL, NULL);
+		//subclass each edit box
+		for (int j = 0; j < 5; j++) {
+			SetWindowLongPtr(planetInputBoxes[i + j], GWLP_USERDATA, i + j);
+			WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(planetInputBoxes[i + j], GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+			oldProcs[i + j] = oldProc;
+		}
+	}
+	hStartSimButton = CreateWindow(L"BUTTON", L"Start Simulation", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+		startingPixel.first, startingPixel.second + 180, 150, 25, hWnd, (HMENU)500, NULL, NULL);
+}
+
+
+//oldProcs.clear(); when destroying the edit boxes later
