@@ -30,7 +30,7 @@ struct State {
 class Calculations {
 public:
 	//initial constructor of our calculations, after this our values for each planet are set by user input.
-	Calculations(int planets, int frameTime, int simLength) //simLength in ms
+	Calculations(int planets, float frameTime, int simLength) //simLength in ms
 		: initialState(planets) //construct initial state
 	{
 		this->planets = planets;
@@ -45,7 +45,7 @@ public:
 	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).
 	std::vector<std::vector<std::pair<float, float>>> solve() {
 		std::vector<std::vector<std::pair<float, float>>> solution(planets);
-		for(int k = 0; k < simLength; k += timeStep) {
+		for(float k = 0; k < simLength; k += timeStep) {
 			for(int i = 0; i < planets; i++) {
 				std::vector<std::pair<float, float>> planetPosition;
 				double netAccelerationX = 0;
@@ -78,7 +78,7 @@ private:
 	//struct holding an array of planet infos.
 	double G = 6.67430; //gravitational constant
 	State initialState;
-	int timeStep; //in ms
+	float timeStep; //in ms
 	int simLength; //in ms
 	int planets;
 	double distanceCalculation(PlanetInfo p1, PlanetInfo p2) {

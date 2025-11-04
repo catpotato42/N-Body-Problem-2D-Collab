@@ -24,12 +24,12 @@ HWND hFrameTracker;
 //number of planets
 int numPlanets;
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
-int frameTime;
+float frameTime;
 //Sim length (ms)
 float simLength;
 //total steps
 int totalSteps;
-int currStep;
+int currStep = 0;
 //Window dimensions
 int windowLength;
 int windowHeight;
@@ -45,7 +45,7 @@ Calculations* solveIVP = NULL;
 //initial value storage
 std::vector<PlanetInfo> initialVals;
 //Simulation
-std::vector<std::vector<std::pair<double, double>>> simulationResult;
+std::vector<std::vector<std::pair<float, float>>> simulationResult;
 
 //Forward declarations when funcs are called before definition
 LRESULT CALLBACK ProcessMessages(HWND, UINT, WPARAM, LPARAM);
@@ -183,8 +183,8 @@ LRESULT CALLBACK ProcessMessages(
 			bool nextPhase = IsValidInitialValues(hWnd); //iterate through every edit ctrl and check if vals are valid
 			if (nextPhase) {
 				StartSimulation(hWnd);
-				hFrameTracker = CreateWindowEx(0, L"STATIC", L"Current Frame: " + currStep, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-					0, 0, 120, 25, hWnd, (HMENU)1, NULL, NULL);
+				hFrameTracker = CreateWindowEx(0, L"STATIC", L"Current Frame: " + (char)currStep, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+					0, 0, 120, 35, hWnd, (HMENU)1, NULL, NULL);
 				currPhase = SIMULATION; //after bc can't draw w/out knowing output values
 			}
 		}
@@ -200,15 +200,15 @@ LRESULT CALLBACK ProcessMessages(
 void OnPaint(HDC hdc)
 {
 	if (currPhase == SIMULATION) {
-		char messageBfr[256] = "got here";
-		HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		WriteConsole(consoleHandle, messageBfr, (DWORD)256, NULL, NULL);
 		int radius = 60;
 		HBRUSH hCurrBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hCurrBrush);
-		Ellipse(hdc, centerX + 110 - radius, centerY - radius, centerX + 110 + radius, centerY + radius);
+		Ellipse(hdc, simulationResult[0][currStep].first - radius, simulationResult[0][currStep].second - radius,
+			simulationResult[0][currStep].first + radius, simulationResult[0][currStep].second + radius);
 		SelectObject(hdc, hOldBrush);
-		
+		wchar_t buf[128];
+		swprintf(buf, _countof(buf), L"Current Frame: %d / %d", currStep, totalSteps);
+		SetWindowTextW(hFrameTracker, buf);		
 	}
 }
 
@@ -359,9 +359,9 @@ bool DestroyIfValid() {
 		int throwaway2 = GetWindowTextA(hEdit2, szBuf2, GetWindowTextLength(hEdit2) + 1);
 		int throwaway3 = GetWindowTextA(hEdit3, szBuf3, GetWindowTextLength(hEdit3) + 1);
 		numPlanets = std::stoi(std::string(szBuf1));
-		frameTime = 1000 / std::stof(std::string(szBuf2));
-		simLength = 1000 * std::stof(std::string(szBuf3));
-		totalSteps = frameTime / simLength;
+		frameTime = 1000.0 / std::stof(std::string(szBuf2)); //16.666 ms
+		simLength = 1000 * std::stof(std::string(szBuf3)); //5000 ms
+		totalSteps = simLength / frameTime; //300
 		solveIVP = new Calculations(
 			numPlanets, frameTime, simLength
 		);
@@ -518,8 +518,8 @@ void StartSimulation(HWND hWnd) {
 		DestroyWindow(hErrorMsg);
 	}
 	DestroyWindow(hStartSimButton);
-	//solveIVP->setInitialValues(initialVals);
-	//simulationResult = solveIVP->solve();
+	solveIVP->setInitialValues(initialVals);
+	simulationResult = solveIVP->solve();
 }
 
 void EndSimulation(HWND hWnd) {
