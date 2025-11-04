@@ -1,14 +1,28 @@
 ﻿  ThreeBodyMain.cpp
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(185,12): warning C4244: 'initializing': conversion from 'LONG_PTR' to 'int', possible loss of data
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(191,15): warning C4244: 'argument': conversion from 'WPARAM' to 'int', possible loss of data
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(357,62): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(359,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(361,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(363,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(365,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(366,25): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(368,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(370,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(372,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(374,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-  Three-Body-Problem-2D-Collab.vcxproj -> C:\c++_programs\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\x64\Debug\Three-Body-Problem-2D-Collab.exe
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(56,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(57,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(60,66): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\Calculations.h(61,66): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'ThreeBodyMain.cpp')
+  
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(188,12): warning C4244: 'initializing': conversion from 'LONG_PTR' to 'int', possible loss of data
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(195,15): warning C4244: 'argument': conversion from 'WPARAM' to 'int', possible loss of data
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(313,27): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(359,62): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(361,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(363,67): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(365,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(367,68): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(368,25): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(370,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(372,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(374,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\ThreeBodyMain.cpp(376,29): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
+  LINK : C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\x64\Debug\Three-Body-Problem-2D-Collab.exe not found or not built by the last incremental link; performing full link
+  Three-Body-Problem-2D-Collab.vcxproj -> C:\Users\awbur\OneDrive\Documents\GitHub\Three-Body-Problem-2D-Collab\Three-Body-Problem-2D-Collab\x64\Debug\Three-Body-Problem-2D-Collab.exe
