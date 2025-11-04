@@ -23,12 +23,11 @@ struct State {
 class Calculations {
 public:
 	//initial constructor of our calculations, after this our values for each planet are set by user input.
-	Calculations(int planets, int fps, float simLength) //simLength in seconds
+	Calculations(int planets, int frameTime, float simLength) //simLength in seconds
 		: initialState(planets) //construct initial state
 	{
-		this->planets = planets;
-		this->timeStep = 1000 / fps; //fps to ms
-		this->simLength = (int)(1000 * simLength); //seconds to ms
+		this->timeStep = frameTime; //ms
+		this->simLength = (int)simLength; //seconds to ms
 		this->planets = planets;
 	};
 	//Function that sets initial values for each planet based on user input.
