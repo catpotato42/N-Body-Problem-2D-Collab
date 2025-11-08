@@ -7,5 +7,5 @@
 3. Input a number of planets from 2-10, desired fps (simulation speed), and simulation length. Press Create.
 4. Then, enter initial values (x-pos, y-pos, x-vel, y-vel, mass) for each planet and begin the simulation. 
 5. Position variables are in pixels from the top left of the screen (positive down and right), which has its width and height printed at the top left when entering initial values. This is not dynamic so resizing the window after the first screen is not recommended.
-6. Velocity is in m/s. 500 thousand-5 million should give movement that looks reasonable.
+6. Velocity is in m/s, + is right/down, - is left/up. 500 thousand-5 million should give movement that looks reasonable.
 7. Mass is in 10^24 kg. While you may notice these values are relatively consistent to the real world, issues with distances appearing too small on screen led us to decrease the gravitational constant from real world 6.67e-11 to 6.67e-5 to make the planets appear far apart while still being a good size.
