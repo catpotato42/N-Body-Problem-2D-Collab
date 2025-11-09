@@ -13,7 +13,7 @@ static TCHAR szWindowClass[] = _T("NBodyApp");
 //Title bar text
 static TCHAR szTitle[] = _T("N Body Simulation");
 //Handles to windows we create on init.
-HWND hLabel1, hLabel2, hLabel3, hEdit1, hEdit2, hEdit3, hButton, hErrorMsg;
+HWND hLabel1, hLabel2, hLabel3, hLabel4, hEdit1, hEdit2, hEdit3, hEdit4, hButton, hErrorMsg;
 //Handles to windows for planet initial value inputs will be created later dynamically and stored here.
 std::vector<HWND> planetLabels;
 std::vector<HWND> planetInputBoxes; //x-pos, y-pos, x-vel, y-vel, mass
@@ -37,6 +37,8 @@ std::vector<float> massPlanets;
 float frameTime;
 //Sim length (ms)
 float simLength;
+//Relative speed, more means faster sim
+float relativeSpeed;
 //total steps
 int totalSteps;
 int currStep = 0;
@@ -325,23 +327,30 @@ void CreateInitialWindows(HWND hWnd) {
 	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 10, 220, 20, hWnd, (HMENU)1, NULL, NULL);
-	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (10-30 recommended, more means a slower simulation and vice versa)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and simulation speed, 2-10 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 40, 220, 70, hWnd, (HMENU)2, NULL, NULL);
-	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 * relative speed seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
+	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+		centerX - 110, 165, 220, 35, hWnd, (HMENU)2, NULL, NULL);
 	hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 10, 60, 20, hWnd, (HMENU)4, NULL, NULL);
 	hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 40, 60, 20, hWnd, (HMENU)5, NULL, NULL);
 	hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 120, 60, 20, hWnd, (HMENU)6, NULL, NULL);
+	hEdit4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
+		centerX + 110, 165, 60, 20, hWnd, (HMENU)6, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-		centerX + 110, 165, 60, 30, hWnd, (HMENU)7, NULL, NULL);
+		centerX + 110, 210, 60, 30, hWnd, (HMENU)7, NULL, NULL);
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
 	WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit2, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	oldProcs.push_back(oldProc);
 	SetWindowLongPtr(hEdit3, GWLP_USERDATA, 0);
 	oldProc = (WNDPROC)SetWindowLongPtr(hEdit3, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+	oldProcs.push_back(oldProc);
+	SetWindowLongPtr(hEdit4, GWLP_USERDATA, 0);
+	oldProc = (WNDPROC)SetWindowLongPtr(hEdit4, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	oldProcs.push_back(oldProc);
 }
 
@@ -377,8 +386,8 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 }
 
 bool IsValidNumberEntry(HWND textBox) {
-	if (textBox == hEdit3 || textBox == hEdit2) {
-		return SpecialCaseForDecimals(textBox, 165);
+	if (textBox == hEdit3 || textBox == hEdit2 || textBox == hEdit4) {
+		return SpecialCaseForDecimals(textBox, 210);
 	}
 	int length = GetWindowTextLength(textBox);
 	char szBuf[2048];
@@ -392,7 +401,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX - 110, 165, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
 			return false;
 		}
 		if (szBuf[i] != '0') {
@@ -404,7 +413,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 165, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
 		return false;
 	}
 	//This is after length so it doesn't give the error for empty box
@@ -413,7 +422,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 165, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 210, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
 		return false;
 	}
 	if (textBox == hEdit1) {
@@ -424,7 +433,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"# of planets must be 2-10", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX -110, 165, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX -110, 210, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
 			return false;
 		}
 	}
@@ -438,22 +447,27 @@ bool DestroyIfValid() {
 		char szBuf1[2048];
 		char szBuf2[2048];
 		char szBuf3[2048];
+		char szBuf4[2048];
 		int throwaway1 = GetWindowTextA(hEdit1, szBuf1, GetWindowTextLength(hEdit1) + 1);
 		int throwaway2 = GetWindowTextA(hEdit2, szBuf2, GetWindowTextLength(hEdit2) + 1);
 		int throwaway3 = GetWindowTextA(hEdit3, szBuf3, GetWindowTextLength(hEdit3) + 1);
+		int throwaway4 = GetWindowTextA(hEdit4, szBuf4, GetWindowTextLength(hEdit4) + 1);
 		numPlanets = std::stoi(std::string(szBuf1));
-		frameTime = 1000.0 / std::stof(std::string(szBuf2)); //16.666 ms
+		frameTime = 1000.0 / std::stof(std::string(szBuf2)); //16.666 ms at 60fps
 		simLength = 1000 * std::stof(std::string(szBuf3)); //5000 ms
-		totalSteps = simLength / frameTime; //300
+		relativeSpeed = std::stof(std::string(szBuf4));
 		solveIVP = new Calculations(
-			numPlanets, frameTime, simLength
+			numPlanets, frameTime, simLength, relativeSpeed
 		);
 		DestroyWindow(hLabel1);
 		DestroyWindow(hLabel2);
 		DestroyWindow(hLabel3);
+		DestroyWindow(hLabel4);
 		DestroyWindow(hEdit1);
 		DestroyWindow(hEdit2);
 		DestroyWindow(hEdit3);
+		DestroyWindow(hEdit4);
+		oldProcs.erase(oldProcs.begin());
 		oldProcs.erase(oldProcs.begin());
 		oldProcs.erase(oldProcs.begin());
 		DestroyWindow(hButton);
@@ -702,6 +716,7 @@ void StartSimulation(HWND hWnd) {
 	solveIVP->setMetersPerPixel(metersPerPixel);
 	solveIVP->setInitialValues(initialVals);
 	simulationResult = solveIVP->solve();
+	totalSteps = simulationResult[0].size();
 }
 
 void EndSimulation(HWND hWnd) {

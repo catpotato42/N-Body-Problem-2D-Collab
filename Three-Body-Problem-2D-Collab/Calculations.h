@@ -30,12 +30,13 @@ struct State {
 class Calculations {
 public:
 	//initial constructor of our calculations, after this our values for each planet are set by user input.
-	Calculations(int planets, float frameTime, int simLength) //simLength in ms
+	Calculations(int planets, float frameTime, int simLength, float relativeSpeed) //simLength in ms
 		: initialState(planets) //construct initial state
 	{
 		this->planets = planets;
 		this->timeStep = frameTime;
 		this->simLength = simLength * 10000;
+		this->relativeSpeed = relativeSpeed;
 	};
 	//Function that sets initial values for each planet based on user input.
 	void setInitialValues(std::vector<PlanetInfo> initVals) {
@@ -48,8 +49,10 @@ public:
 	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).
 	std::vector<std::vector<std::pair<float, float>>> solve() {
 		std::vector<std::vector<std::pair<float, float>>> solution(planets);
+		float returnTracker = 0; //kept independent of frameTime, every 10k * relative speed calculated frames we return one frame.
+		const float returnInterval = 10000.0f * relativeSpeed;
 		for(int step = 0; step * timeStep < simLength; step++) {
-			float k = step * timeStep;
+			returnTracker += timeStep;
 			for(int i = 0; i < planets; i++) {
 				std::vector<std::pair<float, float>> planetPosition;
 				double netAccelerationX = 0;
@@ -71,14 +74,15 @@ public:
 				initialState.states[i].xPos += initialState.states[i].xVel * (timeStep / 1000.0);
 				initialState.states[i].yPos += initialState.states[i].yVel * (timeStep / 1000.0);
 				std::cout << "new position " << initialState.states[i].xPos << ", " << initialState.states[i].yPos << std::endl;
-				float xPosPixel = initialState.states[i].xPos / metersPerPixel;
-				float yPosPixel = initialState.states[i].yPos / metersPerPixel;
-				std::pair<float, float> insert(xPosPixel, yPosPixel);
-				if (step % 10000 == 0) {
-					solution[i].push_back(insert);
-				}
 			}
-			
+			if (returnTracker >= returnInterval || step == 0) {
+				for (int i = 0; i < planets; i++) {
+					float xPosPixel = initialState.states[i].xPos / metersPerPixel;
+					float yPosPixel = initialState.states[i].yPos / metersPerPixel;
+					solution[i].emplace_back(xPosPixel, yPosPixel);
+				}
+				returnTracker = 0;
+			}
 		}
 		return solution;
 	}
@@ -87,7 +91,7 @@ private:
 	State initialState;
 	float timeStep; //in ms
 	int simLength; //in ms
-	int relativeSpeed; //sim sec/real sec
+	float relativeSpeed; //multiplies sim sec/real sec
 	int planets;
 	double metersPerPixel;
 	double distanceCalculation(PlanetInfo p1, PlanetInfo p2) {
