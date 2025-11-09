@@ -28,7 +28,7 @@ HWND hChangeInitialVals;
 HWND hFrameTracker;
 HWND hPositionDisplay;
 //conversion from meters to pixels, i.e 1 pixel = __ meters
-double metersPerPixel = 1e5;
+double metersPerPixel = 1e6;
 //number of planets
 int numPlanets;
 //Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
@@ -497,7 +497,7 @@ void CreatePlanetInitialValues(HWND hWnd) {
 			startingPixel = (startingPixel.second + 205 < clientHeight) ? std::pair<int, int> {startingPixel.first, startingPixel.second}
 			: std::pair<int, int>{ startingPixel.first + 220, 0 }; //205 = 35*5 + 30 pixels button, 220 = length of label + input box + 10
 		}
-		int yVel = ((i / 5) % 3 == 0) ? 4000000 : (((i / 5) % 3 == 1) ? 0 : -4000000); //0 = + vel, 1 = no vel, 2 = - vel, 3 = + vel...
+		int yVel = ((i / 5) % 3 == 0) ? 3000000 : (((i / 5) % 3 == 1) ? 0 : -3000000); //0 = + vel, 1 = no vel, 2 = - vel, 3 = + vel...
 		swprintf(szBufXPos, 256, L"%d", 300 + (i / 5) * 100);
 		swprintf(szBufYPos, 256, L"%d", 500);
 		swprintf(szBufXVel, 256, L"%d", 0);
