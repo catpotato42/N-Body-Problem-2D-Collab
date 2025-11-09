@@ -80,7 +80,11 @@ public:
 		return solution;
 	}
 private:
+<<<<<<< HEAD
 	double G = 6.67430e-9; //gravitational constant
+=======
+	double G = 6.67430e-11; //gravitational constant
+>>>>>>> b6c47b1ae98c4767bdb18eba0b7acf34edc50418
 	State initialState;
 	float timeStep; //in ms
 	int simLength; //in ms
