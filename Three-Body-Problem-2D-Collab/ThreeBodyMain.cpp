@@ -31,7 +31,9 @@ HWND hPositionDisplay;
 double metersPerPixel = 1e6;
 //number of planets
 int numPlanets;
-//Time between frame updates (ms), can be changed during runtime? 17 ms = ~60 fps
+//vector of masses, used for radius calculations
+std::vector<float> massPlanets;
+//The frames per simulation second. More -> more accuracy.
 float frameTime;
 //Sim length (ms)
 float simLength;
@@ -81,7 +83,9 @@ void CreateBackBuffer(int width, int height)
 
 	g_backBuffer.reset(new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB));
 	g_backG.reset(Gdiplus::Graphics::FromImage(g_backBuffer.get()));
-	g_backG->SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	g_backG->SetSmoothingMode(Gdiplus::SmoothingModeNone);
+	g_backG->SetCompositingQuality(Gdiplus::CompositingQualityHighSpeed);
+	//g_backG->SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
 	g_backWidth = width;
 	g_backHeight = height;
@@ -256,7 +260,6 @@ LRESULT CALLBACK ProcessMessages(
 
 void OnPaint(HDC hdc)
 {
-	Gdiplus::Graphics lineGraphics(hdc); //?
 	RECT rc;
 	GetClientRect(WindowFromDC(hdc), &rc);
 	int w = rc.right - rc.left;
@@ -321,19 +324,19 @@ LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lPar
 void CreateInitialWindows(HWND hWnd) {
 	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-		centerX - 110, 10, 220, 25, hWnd, (HMENU)1, NULL, NULL);
-	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (30-60 recommended, more means a slower simulation and vice versa)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-		centerX - 110, 45, 220, 70, hWnd, (HMENU)2, NULL, NULL);
-	hLabel3 = CreateWindowEx(0, L"STATIC", L"Sim length (s)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-		centerX - 110, 125, 220, 25, hWnd, (HMENU)3, NULL, NULL);
+		centerX - 110, 10, 220, 20, hWnd, (HMENU)1, NULL, NULL);
+	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (10-30 recommended, more means a slower simulation and vice versa)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+		centerX - 110, 40, 220, 70, hWnd, (HMENU)2, NULL, NULL);
+	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
 	hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
-		centerX + 110, 10, 60, 25, hWnd, (HMENU)4, NULL, NULL);
+		centerX + 110, 10, 60, 20, hWnd, (HMENU)4, NULL, NULL);
 	hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
-		centerX + 110, 67, 60, 25, hWnd, (HMENU)5, NULL, NULL);
+		centerX + 110, 40, 60, 20, hWnd, (HMENU)5, NULL, NULL);
 	hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
-		centerX + 110, 125, 60, 25, hWnd, (HMENU)6, NULL, NULL);
+		centerX + 110, 120, 60, 20, hWnd, (HMENU)6, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-		centerX + 110, 160, 60, 30, hWnd, (HMENU)7, NULL, NULL);
+		centerX + 110, 165, 60, 30, hWnd, (HMENU)7, NULL, NULL);
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
 	WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit2, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	oldProcs.push_back(oldProc);
@@ -375,7 +378,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 
 bool IsValidNumberEntry(HWND textBox) {
 	if (textBox == hEdit3 || textBox == hEdit2) {
-		return SpecialCaseForDecimals(textBox, 115);
+		return SpecialCaseForDecimals(textBox, 165);
 	}
 	int length = GetWindowTextLength(textBox);
 	char szBuf[2048];
@@ -389,7 +392,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX - 110, 115, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX - 110, 165, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
 			return false;
 		}
 		if (szBuf[i] != '0') {
@@ -401,7 +404,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 115, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 165, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
 		return false;
 	}
 	//This is after length so it doesn't give the error for empty box
@@ -410,7 +413,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 115, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 165, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
 		return false;
 	}
 	if (textBox == hEdit1) {
@@ -421,7 +424,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"# of planets must be 2-10", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX -110, 115, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX -110, 165, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
 			return false;
 		}
 	}
@@ -651,7 +654,7 @@ bool IsValidInitialValues(HWND hWnd) {
 
 //oldProcs.clear(); when destroying the edit boxes later
 void StartSimulation(HWND hWnd) {
-	SetTimer(hWnd, 1, frameTime, (TIMERPROC)NULL);
+	SetTimer(hWnd, 1, 34, (TIMERPROC)NULL); //34 ms -> 30 fps
 	DestroyWindow(hLabel1);
 	//store our initial values in initialVals vector then destroy the input boxes.
 	initialVals.resize(numPlanets);

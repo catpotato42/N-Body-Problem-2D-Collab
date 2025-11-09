@@ -35,7 +35,7 @@ public:
 	{
 		this->planets = planets;
 		this->timeStep = frameTime;
-		this->simLength = simLength;
+		this->simLength = simLength * 10000;
 	};
 	//Function that sets initial values for each planet based on user input.
 	void setInitialValues(std::vector<PlanetInfo> initVals) {
@@ -48,7 +48,8 @@ public:
 	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).
 	std::vector<std::vector<std::pair<float, float>>> solve() {
 		std::vector<std::vector<std::pair<float, float>>> solution(planets);
-		for(float k = 0; k < simLength; k += timeStep) {
+		for(int step = 0; step * timeStep < simLength; step++) {
+			float k = step * timeStep;
 			for(int i = 0; i < planets; i++) {
 				std::vector<std::pair<float, float>> planetPosition;
 				double netAccelerationX = 0;
@@ -73,7 +74,9 @@ public:
 				float xPosPixel = initialState.states[i].xPos / metersPerPixel;
 				float yPosPixel = initialState.states[i].yPos / metersPerPixel;
 				std::pair<float, float> insert(xPosPixel, yPosPixel);
-				solution[i].push_back(insert);
+				if (step % 10000 == 0) {
+					solution[i].push_back(insert);
+				}
 			}
 			
 		}
@@ -84,6 +87,7 @@ private:
 	State initialState;
 	float timeStep; //in ms
 	int simLength; //in ms
+	int relativeSpeed; //sim sec/real sec
 	int planets;
 	double metersPerPixel;
 	double distanceCalculation(PlanetInfo p1, PlanetInfo p2) {
