@@ -1,5 +1,5 @@
 # N-Body-Simulation
-## A two-dimensional graphical simulation of the n body problem in c++ using an initial value problem solver created from scratch as well as the win32 API library
+## A two-dimensional graphical simulation of the n body problem in c++ using an initial value problem solver created from scratch, as well as the win32 API library
 ### Created by Alex Burns and Simon Harrington.
 ### Use instructions
 1. Clone the main or exe branch to your WINDOWS PC.
