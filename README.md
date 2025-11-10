@@ -2,8 +2,8 @@
 ## A two-dimensional graphical simulation of the n body problem in c++ using an initial value problem solver created from scratch, as well as the win32 API library
 ### Created by Alex Burns and Simon Harrington.
 ### Use instructions
-1. Clone the **HigherFPSJittery** branch to your Windows PC.
-2. Navigate to Three-Body-Problem-2D-Collab/x64/Release and double click on the .exe to run. If you have visual studio, you could also open the solution with visual studio and click the unfilled play button (start without debugging).
+1. Clone the **HigherFPSJittery** branch to your Windows PC or press Code -> Download ZIP and extract when complete.
+2. Navigate to Three-Body-Problem-2D-Collab/x64/Release and double click on the .exe to run. If a possible virus window pops up, press more info then run anyway. If you have visual studio, you could also open the solution with visual studio instead and click the unfilled play button (start without debugging).
 3. The initial values produce a very visually interesting result, so if you want to just click through the "Create" and "Start" buttons, you will get a standard version of the three body problem with planets of the same mass. You can raise the relative speed a little as well so that it doesn't take a minute and a half to play out.
 4. Input a number of planets from 2-15. if you input >12 planets, depending on your screen size they may run off the screen.
 5. Input desired fpss (frames per simulation second). This affects the accuracy of the simulation, as 2 fpss will calculate two states every in-simulation second. You can also put decimal values in this field, but only in the form x.xx (there must be a number before the decimal). This just means if you wish for .5 fpss you must enter 0.5. This is true for every input box with capability for decimals. 
