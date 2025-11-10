@@ -353,19 +353,19 @@ void CreateInitialWindows(HWND hWnd) {
 	//However just don't add new controls and it will all be fine.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets (2-15)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 10, 220, 20, hWnd, (HMENU)1, NULL, NULL);
-	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and time to load, .1-5 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and time to load, .1 - 5 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 40, 220, 70, hWnd, (HMENU)2, NULL, NULL);
 	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 * relative speed seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
-	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation, 1 often gives timely results)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation, 1 is a good speed)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 165, 220, 55, hWnd, (HMENU)2, NULL, NULL);
-	hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
+	hEdit1 = CreateWindowEx(0, L"EDIT", L"3", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 10, 60, 20, hWnd, (HMENU)4, NULL, NULL);
-	hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
+	hEdit2 = CreateWindowEx(0, L"EDIT", L"0.5", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 40, 60, 20, hWnd, (HMENU)5, NULL, NULL);
-	hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
+	hEdit3 = CreateWindowEx(0, L"EDIT", L"200", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 120, 60, 20, hWnd, (HMENU)6, NULL, NULL);
-	hEdit4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
+	hEdit4 = CreateWindowEx(0, L"EDIT", L"1", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 165, 60, 20, hWnd, (HMENU)7, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
 		centerX + 110, 230, 60, 30, hWnd, (HMENU)8, NULL, NULL); //ID 8 used in WM_BUTTON
@@ -411,7 +411,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Zeroes are not valid", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, startY, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
+			centerX - 110, startY, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	return !allZeroes;
@@ -455,7 +455,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Zeroes are not valid", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 230, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
+			centerX - 110, 230, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	if (textBox == hEdit1) {
@@ -548,13 +548,13 @@ void CreatePlanetInitialValues(HWND hWnd) {
 			: std::pair<int, int>{ startingPixel.first + 220, 0 }; //205 = 35*5 + 30 pixels button, 220 = length of label + input box + 10
 		}
 		int yVel = ((i / 5) % 3 == 0) ? 1000 : (((i / 5) % 3 == 1) ? 0 : -1000); //0 = + vel, 1 = no vel, 2 = - vel, 3 = + vel...
-		swprintf(szBufXPos, 256, L"%d", 300 + (i / 5) * 100);
-		swprintf(szBufYPos, 256, L"%d", 500);
+		swprintf(szBufXPos, 256, L"%d", 400 + (i / 5) * 100);
+		swprintf(szBufYPos, 256, L"%d", 400);
 		swprintf(szBufXVel, 256, L"%d", 0);
 		swprintf(szBufYVel, 256, L"%d", yVel);
-		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 m per px):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second, 150, 35, hWnd, (HMENU)i, NULL, NULL);
-		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 m per px):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 35, 150, 35, hWnd, (HMENU)(i + 1), NULL, NULL);
 		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 70, 150, 35, hWnd, (HMENU)(i + 2), NULL, NULL);
@@ -570,7 +570,7 @@ void CreatePlanetInitialValues(HWND hWnd) {
 			startingPixel.first + 150, startingPixel.second + 70, 70, 35, hWnd, (HMENU)(i + 7), NULL, NULL);
 		planetInputBoxes[i + 3] = CreateWindow(L"EDIT", szBufYVel, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
 			startingPixel.first + 150, startingPixel.second + 105, 70, 35, hWnd, (HMENU)(i + 8), NULL, NULL);
-		planetInputBoxes[i + 4] = CreateWindow(L"EDIT", L"6", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
+		planetInputBoxes[i + 4] = CreateWindow(L"EDIT", L"3", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
 			startingPixel.first + 150, startingPixel.second + 140, 70, 35, hWnd, (HMENU)(i + 9), NULL, NULL);
 		//subclass each edit box
 		for (int j = 0; j < 5; j++) {
@@ -628,9 +628,9 @@ void ReCreatePlanetInitialValues(HWND hWnd) {
 		swprintf(szBufMass, 256, L"%f", initialVals[i / 5].mass / 1e24);
 
 		//swprintf(buffer, 256, L"%d", 50000);
-		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 meters per px):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second, 150, 35, hWnd, (HMENU)i, NULL, NULL);
-		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 meters per px):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 35, 150, 35, hWnd, (HMENU)(i + 1), NULL, NULL);
 		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 70, 150, 35, hWnd, (HMENU)(i + 2), NULL, NULL);
