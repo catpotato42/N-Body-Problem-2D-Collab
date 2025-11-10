@@ -2,7 +2,7 @@
 ## A two-dimensional graphical simulation of the n body problem in c++ using an initial value problem solver created from scratch, as well as the win32 API library
 ### Created by Alex Burns and Simon Harrington.
 ### Use instructions
-1. Clone the **Experimental** branch to your WINDOWS PC.
+1. Clone the **Experimental** branch to your Windows PC.
 2. ~~If you downloaded the exe, simply double click and run.~~ Otherwise, open the solution with visual studio and click the unfilled play button (start without debugging).
 3. Input a number of planets from 2-15. if you input >12 planets, depending on your screen size they may run off the screen.
 4. Input desired fpss (frames per simulation second). This affects the accuracy of the simulation, as 2 fpss will calculate two states every in-simulation second. You can also put decimal values in this field, but only in the form x.xx (there must be a number before the decimal). This just means if you wish for .5 fpss you must enter 0.5. This is true for every input box with capability for decimals. 
