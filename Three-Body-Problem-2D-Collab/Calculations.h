@@ -36,7 +36,9 @@ public:
 		this->planets = planets;
 		this->framesPerSimSecond = framesPerSimSecond; //fpss
 		this->simLength = simLength * 10000; //internal seconds simLength
-		this->relativeSpeed = relativeSpeed; //controls 
+		//makes it so that as relativeSpeed entered increases, amount of frames outputted lowers, so that relative speed is actually
+		//directly proportional to speed of sim outputted. relativeSpeed = frames outputted per 1000 seconds run
+		this->relativeSpeed = 1.0f / relativeSpeed;
 		this->timeStep = 1000.0f / framesPerSimSecond;
 	};
 	//Function that sets initial values for each planet based on user input.
@@ -51,9 +53,9 @@ public:
 	std::vector<std::vector<std::pair<float, float>>> solve() {
 		std::vector<std::vector<std::pair<float, float>>> solution(planets);
 
-		int nextOutputStep = 0; //kept independent of frameTime, every 10k * relative speed calculated frames we return one frame.
+		int nextOutputStep = 0; //kept independent of frameTime, every 1000 * relative speed calculated frames we return one frame.
 		const int totalSteps = static_cast<int>(simLength * framesPerSimSecond); //apparently static_cast is standard cause (int) is ambiguous
-		const int desiredOutputFrames = static_cast<int>(simLength / 10000 * relativeSpeed);
+		const int desiredOutputFrames = static_cast<int>((simLength / 1000) * relativeSpeed);
 		const int outputEveryNsteps = totalSteps / desiredOutputFrames;
 		for(int step = 0; step < totalSteps; step++) {
 			for(int i = 0; i < planets; i++) {
@@ -85,6 +87,11 @@ public:
 					solution[i].emplace_back(xPosPixel, yPosPixel);
 				}
 				nextOutputStep += outputEveryNsteps;
+			}
+		}
+		if (solution[0].size() == 0) { //ideally would throw a relativeSpeed too high error
+			for (int i = 0; i < planets; i++) {
+				solution[i].emplace_back(0, 0);
 			}
 		}
 		return solution;

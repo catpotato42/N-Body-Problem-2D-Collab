@@ -17,7 +17,8 @@ HWND hLabel1, hLabel2, hLabel3, hLabel4, hEdit1, hEdit2, hEdit3, hEdit4, hButton
 //Handles to windows for planet initial value inputs will be created later dynamically and stored here.
 std::vector<HWND> planetLabels;
 std::vector<HWND> planetInputBoxes; //x-pos, y-pos, x-vel, y-vel, mass
-//Old edit proc for subclassed edit control
+//Old edit proc for subclassed edit control. This is resized after the initial screen to numPlanets * 5
+//and is never reset back down except after the initial screen on subsequent runs.
 std::vector<WNDPROC> oldProcs;
 HWND hStartSimButton;
 //Restart
@@ -26,22 +27,24 @@ HWND hRestartSimButton;
 HWND hChangeInitialVals;
 //Frame tracker in top left
 HWND hFrameTracker;
+//Unused, old implementation is commented out in WM_COMMAND under the currPhase == INITIALVALS statement,
+//commenting back in or out shouldm't lead to issues as all usage is guarded currently. This is for debugging primarily.
 HWND hPositionDisplay;
-//conversion from meters to pixels, i.e 1 pixel = __ meters
+//conversion from meters to pixels, i.e 1 pixel = 1e6 meters
 const double metersPerPixel = 1e6;
 //number of planets
 int numPlanets;
-//vector of radius calculated by mass
+//vector of radius calculated by mass inputted
 std::vector<int> radiusPlanets;
 //length of trail behind planets
 const int trailLength = 50;
-//The frames per simulation second. More -> more accuracy.
+//The frames per simulation second. More -> more accuracy but doesn't change the time in simulation seconds when a frame is outputted. Full explanation on the README.
 float fpss;
-//Sim length (ms)
+//Sim length (seconds simulation time)
 float simLength;
-//Relative speed, more means faster sim
+//Relative speed, more means faster sim. A full explanation is provided in the README.
 float relativeSpeed;
-//total steps
+//total steps outputted by our solve function (given in StartSimulation)
 int totalSteps;
 int currStep = 0;
 //Window dimensions
@@ -49,7 +52,7 @@ int windowLength;
 int windowHeight;
 int centerX; //used for initial screen && error msg positioning
 int centerY; //used for testing
-//Current phase tracker
+//Current phase tracker, used for a number of functions to validate that we're on the right screen.
 enum phaseTracker { CREATION, INITIALVALS, SIMULATION, PAUSED};
 phaseTracker currPhase = CREATION;
 //Stored instance handle for use in Win32 API calls
@@ -101,6 +104,7 @@ int WINAPI WinMain(
 	_In_ LPSTR     lpCmdLine,
 	_In_ int       nCmdShow
 ) {
+	//All standard, uses gdiplus.
 	WNDCLASSEX wcex;
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR           gdiplusToken;
@@ -117,10 +121,14 @@ int WINAPI WinMain(
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
+	//registers our window
 	if (!RegisterClassEx(&wcex)) {
 		return false;
 	}
+
+	//this all depends on the window being created as full screen. Again, centerX and centerY are used only on the first screen (CREATION).
+	//HOWEVER, windowLength and windowHeight are used in CreatePlanetInitialValues to let the user know how big their screen is.
+	//All of this means right now you shouldn't resize your screen as it's gonna f up that output.
 	windowLength = GetSystemMetrics(SM_CXFULLSCREEN);
 	windowHeight = GetSystemMetrics(SM_CYFULLSCREEN);
 	centerX = windowLength / 2;
@@ -128,6 +136,7 @@ int WINAPI WinMain(
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	HWND hWnd = CreateWindowEx(
+		//these comments are for us as we haven't used Win32 API before
 		WS_EX_OVERLAPPEDWINDOW, //style
 		szWindowClass, //name of application
 		szTitle, //text in title bar
@@ -170,7 +179,8 @@ LRESULT CALLBACK ProcessMessages(
 		return 0;
 	}
 	case WM_ERASEBKGND: {
-		//Redraw background in black every time InvalidateRect is called
+		//Redraw background in black every time InvalidateRect(..., ..., TRUE) is called.
+		//The if is an extra guard to make sure we don't slow down our simulation.
 		if (currPhase != SIMULATION) {
 			HDC hdcErase = (HDC)wParam;
 			RECT rc;
@@ -178,9 +188,10 @@ LRESULT CALLBACK ProcessMessages(
 			HBRUSH hBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
 			FillRect(hdcErase, &rc, hBrush);
 		}
-		return 1; //1 for success
+		return 1; //1 for success i guess
 	}
 	case WM_PAINT:
+		//pretty standard
 		hdc = BeginPaint(hWnd, &ps);
 		OnPaint(hdc);
 		EndPaint(hWnd, &ps);
@@ -189,21 +200,22 @@ LRESULT CALLBACK ProcessMessages(
 		PostQuitMessage(0);
 		return 0;
 	case WM_TIMER:
-		//Function that runs 30 fps: 34 ms is ~30 fps
+		//Function that runs __ fps: 1000/fps = ms between frames. Timer set at the end of StartSimulation.
 		currStep++;
 		if (currStep < totalSteps) {
 			wchar_t buf[128];
 			swprintf(buf, _countof(buf), L"Current Frame: %d / %d", currStep, totalSteps);
 			SetWindowTextW(hFrameTracker, buf);
-			/*if (simulationResult.size() >= 2 &&
+			if (simulationResult.size() >= 2 &&
 				currStep < (int)simulationResult[0].size() &&
-				currStep < (int)simulationResult[1].size())
+				currStep < (int)simulationResult[1].size() && 
+				hPositionDisplay != NULL)
 			{
 				swprintf(buf, _countof(buf), L"Current pos: {%d, %d}, {%d, %d}",
 					(int)simulationResult[0][currStep].first, (int)simulationResult[0][currStep].second,
 					(int)simulationResult[1][currStep].first, (int)simulationResult[1][currStep].second);
 				SetWindowTextW(hPositionDisplay, buf);
-			}*/
+			}
 			InvalidateRect(hWnd, NULL, FALSE);
 		}
 		else {
@@ -228,7 +240,7 @@ LRESULT CALLBACK ProcessMessages(
 			if (nextPhase) {
 				StartSimulation(hWnd);
 				hFrameTracker = CreateWindowEx(0, L"STATIC", L"Current Frame: " + (char)currStep, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-					0, 0, 170, 35, hWnd, (HMENU)1, NULL, NULL);
+					0, 0, 170, 25, hWnd, (HMENU)1, NULL, NULL);
 				//hPositionDisplay = CreateWindowEx(0, L"STATIC", L"Current pos: ", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 				//	0, 35, 200, 70, hWnd, (HMENU)1, NULL, NULL);
 				currPhase = SIMULATION; //after bc can't draw w/out knowing output values
@@ -337,14 +349,16 @@ LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lPar
 
 void CreateInitialWindows(HWND hWnd) {
 	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
+	//I know these locations should be variables in the global context, as the error msg positioning y value depends on how large these windows are (it's equal to hButton y).
+	//However just don't add new controls and it will all be fine.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets (2-15)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 10, 220, 20, hWnd, (HMENU)1, NULL, NULL);
-	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and simulation speed, .01-3 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and time to load, .1-5 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 40, 220, 70, hWnd, (HMENU)2, NULL, NULL);
 	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 * relative speed seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
-	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-		centerX - 110, 165, 220, 35, hWnd, (HMENU)2, NULL, NULL);
+	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation, 1 often gives timely results)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+		centerX - 110, 165, 220, 55, hWnd, (HMENU)2, NULL, NULL);
 	hEdit1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 10, 60, 20, hWnd, (HMENU)4, NULL, NULL);
 	hEdit2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
@@ -354,9 +368,10 @@ void CreateInitialWindows(HWND hWnd) {
 	hEdit4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 165, 60, 20, hWnd, (HMENU)7, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-		centerX + 110, 210, 60, 30, hWnd, (HMENU)8, NULL, NULL);
+		centerX + 110, 230, 60, 30, hWnd, (HMENU)8, NULL, NULL); //ID 8 used in WM_BUTTON
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
 	WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit2, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+	//if it's our second run, oldProcs will be resized, so we just set index 0 to these.
 	if (oldProcs.size() > 0) oldProcs[0] = oldProc;
 	else oldProcs.push_back(oldProc);
 	SetWindowLongPtr(hEdit3, GWLP_USERDATA, 0);
@@ -395,7 +410,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 		if (hErrorMsg != NULL) {
 			DestroyWindow(hErrorMsg);
 		}
-		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Zeroes are not valid", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
 			centerX - 110, startY, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
@@ -404,7 +419,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 
 bool IsValidNumberEntry(HWND textBox) {
 	if (textBox == hEdit3 || textBox == hEdit2 || textBox == hEdit4) {
-		return SpecialCaseForDecimals(textBox, 210);
+		return SpecialCaseForDecimals(textBox, 230);
 	}
 	int length = GetWindowTextLength(textBox);
 	char szBuf[2048];
@@ -419,7 +434,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
+				centerX - 110, 230, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 			return false;
 		}
 		if (szBuf[i] != '0') {
@@ -431,7 +446,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
+			centerX - 110, 230, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	//This is after length so it doesn't give the error for empty box
@@ -439,8 +454,8 @@ bool IsValidNumberEntry(HWND textBox) {
 		if (hErrorMsg != NULL) {
 			DestroyWindow(hErrorMsg);
 		}
-		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 210, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
+		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Zeroes are not valid", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			centerX - 110, 230, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	if (textBox == hEdit1) {
@@ -451,7 +466,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"# of planets must be 2-15", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX -110, 210, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
+				centerX -110, 230, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 			return false;
 		}
 	}
@@ -537,15 +552,15 @@ void CreatePlanetInitialValues(HWND hWnd) {
 		swprintf(szBufYPos, 256, L"%d", 500);
 		swprintf(szBufXVel, 256, L"%d", 0);
 		swprintf(szBufYVel, 256, L"%d", yVel);
-		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second, 150, 35, hWnd, (HMENU)i, NULL, NULL);
-		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 35, 150, 35, hWnd, (HMENU)(i + 1), NULL, NULL);
-		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 70, 150, 35, hWnd, (HMENU)(i + 2), NULL, NULL);
-		planetLabels[i + 3] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-velocity:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 3] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 105, 150, 35, hWnd, (HMENU)(i + 3), NULL, NULL);
-		planetLabels[i + 4] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" mass:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 4] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" mass (in 10^24 kgs):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 140, 150, 35, hWnd, (HMENU)(i + 4), NULL, NULL);
 		planetInputBoxes[i] = CreateWindow(L"EDIT", szBufXPos, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
 			startingPixel.first + 150, startingPixel.second, 70, 35, hWnd, (HMENU)(i + 5), NULL, NULL);
@@ -613,15 +628,15 @@ void ReCreatePlanetInitialValues(HWND hWnd) {
 		swprintf(szBufMass, 256, L"%f", initialVals[i / 5].mass / 1e24);
 
 		//swprintf(buffer, 256, L"%d", 50000);
-		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second, 150, 35, hWnd, (HMENU)i, NULL, NULL);
-		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 1] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-position (10^6 meters per pixel):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 35, 150, 35, hWnd, (HMENU)(i + 1), NULL, NULL);
-		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 2] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" x-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 70, 150, 35, hWnd, (HMENU)(i + 2), NULL, NULL);
-		planetLabels[i + 3] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-velocity:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 3] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" y-velocity (m/s):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 105, 150, 35, hWnd, (HMENU)(i + 3), NULL, NULL);
-		planetLabels[i + 4] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" mass:").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
+		planetLabels[i + 4] = CreateWindowEx(0, L"STATIC", (L"Planet " + number + L" mass (10^24 kgs):").c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE | ES_CENTER,
 			startingPixel.first, startingPixel.second + 140, 150, 35, hWnd, (HMENU)(i + 4), NULL, NULL);
 		planetInputBoxes[i] = CreateWindow(L"EDIT", szBufXPos, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_RIGHT,
 			startingPixel.first + 150, startingPixel.second, 70, 35, hWnd, (HMENU)(i + 5), NULL, NULL);
@@ -675,7 +690,7 @@ bool IsValidInitialValues(HWND hWnd) {
 			if (hErrorMsg != NULL) {
 				DestroyWindow(hErrorMsg);
 			}
-			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
+			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Zeroes are not valid", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
 				startErrorX, startErrorY, 150, 35, GetParent(textBox), (HMENU)501, NULL, NULL);
 			return false;
 		}
