@@ -28,13 +28,15 @@ HWND hChangeInitialVals;
 HWND hFrameTracker;
 HWND hPositionDisplay;
 //conversion from meters to pixels, i.e 1 pixel = __ meters
-double metersPerPixel = 1e6;
+const double metersPerPixel = 1e6;
 //number of planets
 int numPlanets;
-//vector of masses, used for radius calculations
-std::vector<float> massPlanets;
+//vector of radius calculated by mass
+std::vector<int> radiusPlanets;
+//length of trail behind planets
+const int trailLength = 50;
 //The frames per simulation second. More -> more accuracy.
-float frameTime;
+float fpss;
 //Sim length (ms)
 float simLength;
 //Relative speed, more means faster sim
@@ -85,7 +87,7 @@ void CreateBackBuffer(int width, int height)
 
 	g_backBuffer.reset(new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB));
 	g_backG.reset(Gdiplus::Graphics::FromImage(g_backBuffer.get()));
-	g_backG->SetSmoothingMode(Gdiplus::SmoothingModeNone);
+	g_backG->SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
 	g_backG->SetCompositingQuality(Gdiplus::CompositingQualityHighSpeed);
 	g_backG->SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
@@ -187,13 +189,13 @@ LRESULT CALLBACK ProcessMessages(
 		PostQuitMessage(0);
 		return 0;
 	case WM_TIMER:
-		//Function that runs 60 fps: 17 ms is ~60 fps
+		//Function that runs 30 fps: 34 ms is ~30 fps
 		currStep++;
 		if (currStep < totalSteps) {
 			wchar_t buf[128];
 			swprintf(buf, _countof(buf), L"Current Frame: %d / %d", currStep, totalSteps);
 			SetWindowTextW(hFrameTracker, buf);
-			if (simulationResult.size() >= 2 &&
+			/*if (simulationResult.size() >= 2 &&
 				currStep < (int)simulationResult[0].size() &&
 				currStep < (int)simulationResult[1].size())
 			{
@@ -201,7 +203,7 @@ LRESULT CALLBACK ProcessMessages(
 					(int)simulationResult[0][currStep].first, (int)simulationResult[0][currStep].second,
 					(int)simulationResult[1][currStep].first, (int)simulationResult[1][currStep].second);
 				SetWindowTextW(hPositionDisplay, buf);
-			}
+			}*/
 			InvalidateRect(hWnd, NULL, FALSE);
 		}
 		else {
@@ -212,7 +214,7 @@ LRESULT CALLBACK ProcessMessages(
 		return 0;
 	case WM_COMMAND: {
 		//The difference between the way I implemented the first two phase changes is unfortunate.
-		if (LOWORD(wParam) == 7 && currPhase == CREATION) { //If Create button pressed (7 is HMENU ID)
+		if (LOWORD(wParam) == 8 && currPhase == CREATION) { //If Create button pressed (7 is HMENU ID)
 			bool nextPhase = DestroyIfValid();
 			if (nextPhase) {
 				//increment phase
@@ -227,8 +229,8 @@ LRESULT CALLBACK ProcessMessages(
 				StartSimulation(hWnd);
 				hFrameTracker = CreateWindowEx(0, L"STATIC", L"Current Frame: " + (char)currStep, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 					0, 0, 170, 35, hWnd, (HMENU)1, NULL, NULL);
-				hPositionDisplay = CreateWindowEx(0, L"STATIC", L"Current pos: ", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-					0, 35, 200, 70, hWnd, (HMENU)1, NULL, NULL);
+				//hPositionDisplay = CreateWindowEx(0, L"STATIC", L"Current pos: ", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+				//	0, 35, 200, 70, hWnd, (HMENU)1, NULL, NULL);
 				currPhase = SIMULATION; //after bc can't draw w/out knowing output values
 			}
 		}
@@ -272,18 +274,28 @@ void OnPaint(HDC hdc)
 	g_backG->Clear(Gdiplus::Color::Black);
 
 	if (currPhase == SIMULATION) {
-		int radius = 8;
-		//erase the old frame
+		int radius;
+		float cx, cy;
 		for (int i = 0; i < numPlanets; i++) {
-			//draw a line from the current step position to the next step position
-			for (int j = (currStep >= 50) ? currStep - 50 : 1; j < currStep; j++) {
-				if (j > 0) {
-					g_backG->DrawLine(planetPens[i].get(),
-						simulationResult[i][j - 1].first, simulationResult[i][j - 1].second, simulationResult[i][j].first, simulationResult[i][j].second);
+
+			int start = (currStep >= trailLength) ? currStep - trailLength : 1; //if currStep is smaller, start at step 1
+			int count = currStep - start; //# of pts to draw
+			//draw a line from the current step position to the next step position. malloca instead of alloca bc vs insisted, but shouldn't fall back most likely
+			if (count > 1) {
+				Gdiplus::PointF* pts = (Gdiplus::PointF*)_malloca(sizeof(Gdiplus::PointF) * count);
+				for (int j = start, k = 0; j < currStep; j++, k++) {
+					pts[k].X = simulationResult[i][j].first;
+					pts[k].Y = simulationResult[i][j].second;
 				}
+				if (count > 1) {
+					g_backG->DrawLines(planetPens[i].get(), pts, count);
+				}
+				_freea(pts);
 			}
-			float cx = simulationResult[i][currStep].first;
-			float cy = simulationResult[i][currStep].second;
+
+			radius = radiusPlanets[i];
+			cx = simulationResult[i][currStep].first;
+			cy = simulationResult[i][currStep].second;
 			//have to cast to REAL to get the correct overload i guess
 			if ((size_t)i < planetBrushes.size() && planetBrushes[i]) {
 				g_backG->FillEllipse(planetBrushes[i].get(), static_cast<Gdiplus::REAL>(cx - radius), static_cast<Gdiplus::REAL>(cy - radius), static_cast<Gdiplus::REAL>(radius * 2), static_cast<Gdiplus::REAL>(radius * 2));
@@ -308,7 +320,7 @@ LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lPar
 		if (isdigit((int)wParam) || wParam == VK_BACK)
 			return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
 
-		if ((allowDecimal || oldProcs.size() < 5) && wParam == '.' && SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0) > 0)
+		if ((allowDecimal || currPhase == CREATION) && wParam == '.' && SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0) > 0)
 			return CallWindowProc(oldProcs[index], hEdit, msg, wParam, lParam);
 
 		if (allowNeg && wParam == '-' && SendMessage(hEdit, WM_GETTEXTLENGTH, 0, 0) == 0)
@@ -327,7 +339,7 @@ void CreateInitialWindows(HWND hWnd) {
 	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets (2-15)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 10, 220, 20, hWnd, (HMENU)1, NULL, NULL);
-	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and simulation speed, 2-10 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+	hLabel2 = CreateWindowEx(0, L"STATIC", L"Frames per simulation second (more increases accuracy and simulation speed, .01-3 recommended)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 40, 220, 70, hWnd, (HMENU)2, NULL, NULL);
 	hLabel3 = CreateWindowEx(0, L"STATIC", L"Length of time to simulate (in 10,000 * relative speed seconds)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
@@ -340,18 +352,23 @@ void CreateInitialWindows(HWND hWnd) {
 	hEdit3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 120, 60, 20, hWnd, (HMENU)6, NULL, NULL);
 	hEdit4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
-		centerX + 110, 165, 60, 20, hWnd, (HMENU)6, NULL, NULL);
+		centerX + 110, 165, 60, 20, hWnd, (HMENU)7, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-		centerX + 110, 210, 60, 30, hWnd, (HMENU)7, NULL, NULL);
+		centerX + 110, 210, 60, 30, hWnd, (HMENU)8, NULL, NULL);
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
 	WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit2, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
-	oldProcs.push_back(oldProc);
+	if (oldProcs.size() > 0) oldProcs[0] = oldProc;
+	else oldProcs.push_back(oldProc);
 	SetWindowLongPtr(hEdit3, GWLP_USERDATA, 0);
 	oldProc = (WNDPROC)SetWindowLongPtr(hEdit3, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	oldProcs.push_back(oldProc);
+	if (oldProcs.size() > 0) oldProcs[1] = oldProc;
+	else oldProcs.push_back(oldProc);
 	SetWindowLongPtr(hEdit4, GWLP_USERDATA, 0);
 	oldProc = (WNDPROC)SetWindowLongPtr(hEdit4, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	oldProcs.push_back(oldProc);
+	if (oldProcs.size() > 0) oldProcs[2] = oldProc;
+	else oldProcs.push_back(oldProc);
 }
 
 bool SpecialCaseForDecimals(HWND textBox, int startY) {
@@ -371,7 +388,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, startY, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, startY, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	if (allZeroes) {
@@ -379,7 +396,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, startY, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, startY, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	return !allZeroes;
@@ -393,6 +410,7 @@ bool IsValidNumberEntry(HWND textBox) {
 	char szBuf[2048];
 	LONG lResult;
 	lResult = GetWindowTextA(textBox, szBuf, length + 1);
+
 	//don't want any negatives or decimals, so we can iterate through and check the string to make sure it's all digits
 	bool allZeroes = true;
 	for (int i = 0; i < length; i++) {
@@ -401,7 +419,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"Invalid entry", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 			return false;
 		}
 		if (szBuf[i] != '0') {
@@ -413,7 +431,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"You missed a box", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 210, 150, 25, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	//This is after length so it doesn't give the error for empty box
@@ -422,7 +440,7 @@ bool IsValidNumberEntry(HWND textBox) {
 			DestroyWindow(hErrorMsg);
 		}
 		hErrorMsg = CreateWindowEx(0, L"STATIC", L"Don't just put in zeroes asshole", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-			centerX - 110, 210, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+			centerX - 110, 210, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 		return false;
 	}
 	if (textBox == hEdit1) {
@@ -433,7 +451,7 @@ bool IsValidNumberEntry(HWND textBox) {
 				DestroyWindow(hErrorMsg);
 			}
 			hErrorMsg = CreateWindowEx(0, L"STATIC", L"# of planets must be 2-15", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_CENTER,
-				centerX -110, 210, 150, 35, GetParent(textBox), (HMENU)8, NULL, NULL);
+				centerX -110, 210, 150, 35, GetParent(textBox), (HMENU)9, NULL, NULL);
 			return false;
 		}
 	}
@@ -453,11 +471,11 @@ bool DestroyIfValid() {
 		int throwaway3 = GetWindowTextA(hEdit3, szBuf3, GetWindowTextLength(hEdit3) + 1);
 		int throwaway4 = GetWindowTextA(hEdit4, szBuf4, GetWindowTextLength(hEdit4) + 1);
 		numPlanets = std::stoi(std::string(szBuf1));
-		frameTime = 1000.0 / std::stof(std::string(szBuf2)); //16.666 ms at 60fps
-		simLength = 1000 * std::stof(std::string(szBuf3)); //5000 ms
+		fpss = std::stof(std::string(szBuf2));
+		simLength = std::stof(std::string(szBuf3)); //in seconds
 		relativeSpeed = std::stof(std::string(szBuf4));
 		solveIVP = new Calculations(
-			numPlanets, frameTime, simLength, relativeSpeed
+			numPlanets, fpss, simLength, relativeSpeed
 		);
 		DestroyWindow(hLabel1);
 		DestroyWindow(hLabel2);
@@ -668,10 +686,10 @@ bool IsValidInitialValues(HWND hWnd) {
 
 //oldProcs.clear(); when destroying the edit boxes later
 void StartSimulation(HWND hWnd) {
-	SetTimer(hWnd, 1, 34, (TIMERPROC)NULL); //34 ms -> 30 fps
 	DestroyWindow(hLabel1);
 	//store our initial values in initialVals vector then destroy the input boxes.
 	initialVals.resize(numPlanets);
+	radiusPlanets.resize(numPlanets);
 	for (int i = 0; i < numPlanets; i++) {
 		int currInputIndex = i * 5;
 		char szBufXPos[2048];
@@ -689,6 +707,27 @@ void StartSimulation(HWND hWnd) {
 		float xVel = std::stof(szBufXVel);
 		float yVel = std::stof(szBufYVel);
 		float mass = std::stof(szBufMass);
+		if (mass < .001) {
+			radiusPlanets[i] = 2;
+		}
+		if (mass < .01) {
+			radiusPlanets[i] = 4;
+		}
+		else if (mass < .05) {
+			radiusPlanets[i] = 6;
+		}
+		else if (mass <= 1) {
+			radiusPlanets[i] = 7;
+		}
+		else if (mass <= 10) {
+			radiusPlanets[i] = 8;
+		}
+		else if (mass <= 30) {
+			radiusPlanets[i] = 15;
+		}
+		else if (mass > 30) {
+			radiusPlanets[i] = 20;
+		}
 		double xPosMeters = xPos * metersPerPixel;
 		double yPosMeters = yPos * metersPerPixel;
 		double massKG = mass * 1e24;
@@ -718,12 +757,15 @@ void StartSimulation(HWND hWnd) {
 	solveIVP->setInitialValues(initialVals);
 	simulationResult = solveIVP->solve();
 	totalSteps = simulationResult[0].size();
+	SetTimer(hWnd, 1, 34, (TIMERPROC)NULL); //34 ms -> 30 fps
 }
 
 void EndSimulation(HWND hWnd) {
 	KillTimer(hWnd, 1);
 	DestroyWindow(hFrameTracker);
-	DestroyWindow(hPositionDisplay);
+	if (hPositionDisplay != NULL) {
+		DestroyWindow(hPositionDisplay);
+	}
 	hRestartSimButton = CreateWindow(L"BUTTON", L"Restart", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
 		centerX - 30, 115, 60, 30, hWnd, (HMENU)1000, NULL, NULL);
 	hChangeInitialVals = CreateWindow(L"BUTTON", L"Change Initial Values", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
