@@ -32,3 +32,5 @@ https://medium.com/better-programming/2-d-three-body-problem-simulation-made-sim
 
 ### Future Updates
 We're pretty happy with the current state of the project, visuals may be the only thing we'd change. However, our first priority for any future update would be a button to rerun the simulation so you don't have to calculate it again.
+
+This project uses the MIT license
