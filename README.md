@@ -24,7 +24,7 @@ Try simulating the Earth and Moon! The moon is ~7e22 kgs, while the earth is ~6e
 This simulation uses Euler integration, which is a method of approximating ODEs (Ordinary Differential Equations) that is more simple to implement and sometimes less costly than other methods. Another commonly used ODE solver you might use if you did this program in python, for example, would be the Runge-Kutta 4. The Euler method is technically a Runge-Kutta 1, as it falls under the classification of a first-order Runge-Kutta equation, but Euler came first so he got to name it after himself. The major disadvantage to Euler integration vs the commonly used RK4 is that rounding errors on a previous step wildly throw off calculations on a successive step. This means that many more steps are often required to achieve the same accuracy as RK4, leading to Euler sometimes being more costly even though RK4 has more calculations required per step (4 vs 1).
 We decided to use Win32 API for user interface, mostly due to the ease of creation on a Windows computer. However, the Calculations.h file is intentionally built as a standalone n-body ODE stepper, and we could very feasibly port it to qt if we wished to.
 
-### Sources for further research
+### Sources
 A paper that focuses on comparison of efficiency for Euler & Runge-Kutta:
 Lanlege I., Kehinde R., Sobanke D. A., Garba U. M. Comparison of Euler and Runge-Kutta methods in solving ordinary differential equations of order two and four. Lagos Journal of Science, vol. A32, pp. 37–??, 2018. Available at: http://ljs.academicdirect.org/A32/010_037.htm
 A simple guide to implementing this in python using common libraries:
