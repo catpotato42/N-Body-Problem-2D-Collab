@@ -31,6 +31,4 @@ A simple guide to implementing this in python using common libraries:
 https://medium.com/better-programming/2-d-three-body-problem-simulation-made-simpler-with-python-40d74217a42a
 
 ### Future Updates
-We're pretty happy with the current state of the project, visuals may be the only thing we'd change. However, our first priority for any future update would be a button to rerun the simulation so you don't have to calculate it again.
-
-This project uses the MIT license
+We're pretty happy with the current state of the project, but if we updated this in the future it would be to add a field for meters per pixel.
