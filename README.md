@@ -31,4 +31,4 @@ A simple guide to implementing this in python using common libraries:
 https://medium.com/better-programming/2-d-three-body-problem-simulation-made-simpler-with-python-40d74217a42a
 
 ### Future Updates
-We're pretty happy with the current state of the project, but if we updated this in the future it would be to add a field for meters per pixel.
+We're pretty happy with the current state of the project, so anything future would be bug-fixing
