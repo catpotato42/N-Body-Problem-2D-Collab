@@ -30,7 +30,7 @@ struct State {
 class Calculations {
 public:
 	//initial constructor of our calculations, after this our values for each planet are set by user input.
-	Calculations(int planets, float framesPerSimSecond, int simLength, float relativeSpeed)
+	Calculations(int planets, float framesPerSimSecond, int simLength, float relativeSpeed, double metersPerPixel)
 		: initialState(planets) //construct initial state
 	{
 		this->planets = planets;
@@ -40,13 +40,13 @@ public:
 		//directly proportional to speed of sim outputted. relativeSpeed = frames outputted per 1000 seconds run
 		this->relativeSpeed = 1.0f / relativeSpeed;
 		this->timeStep = 1000.0f / framesPerSimSecond;
+		this->metersPerPixel = metersPerPixel;
 	};
 	//Function that sets initial values for each planet based on user input.
 	void setInitialValues(std::vector<PlanetInfo> initVals) {
 		initialState.states = initVals;
 		std::cout << initialState.states[0].xPos << std::endl;
 	}
-	void setMetersPerPixel(double metersPerPixel) { this->metersPerPixel = metersPerPixel; }
 
 
 	//Function to step our ODE outputting an array of State structs for each timestep (using our state structs, time intervals, and simulation length).

@@ -12,8 +12,8 @@
 static TCHAR szWindowClass[] = _T("NBodyApp");
 //Title bar text
 static TCHAR szTitle[] = _T("N Body Simulation");
-//Handles to windows we create on init.
-HWND hLabel1, hLabel2, hLabel3, hLabel4, hEdit1, hEdit2, hEdit3, hEdit4, hButton, hErrorMsg;
+//Handles to windows we create on init. I thought we might only have 2 so didn't nae or create an array. my mistake.
+HWND hLabel1, hLabel2, hLabel3, hLabel4, hLabel5, hEdit1, hEdit2, hEdit3, hEdit4, hEdit5, hButton, hErrorMsg;
 //Handles to windows for planet initial value inputs will be created later dynamically and stored here.
 std::vector<HWND> planetLabels;
 std::vector<HWND> planetInputBoxes; //x-pos, y-pos, x-vel, y-vel, mass
@@ -31,7 +31,7 @@ HWND hFrameTracker;
 //commenting back in or out shouldm't lead to issues as all usage is guarded currently. This is for debugging primarily.
 HWND hPositionDisplay;
 //conversion from meters to pixels, i.e 1 pixel = 1e6 meters
-const double metersPerPixel = 1e6;
+double metersPerPixel = 1e6;
 //number of planets
 int numPlanets;
 //vector of radius calculated by mass inputted
@@ -188,7 +188,7 @@ LRESULT CALLBACK ProcessMessages(
 			HBRUSH hBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
 			FillRect(hdcErase, &rc, hBrush);
 		}
-		return 1; //1 for success i guess
+		return 0;
 	}
 	case WM_PAINT:
 		//pretty standard
@@ -359,6 +359,8 @@ void CreateInitialWindows(HWND hWnd) {
 		centerX - 110, 120, 220, 35, hWnd, (HMENU)3, NULL, NULL);
 	hLabel4 = CreateWindowEx(0, L"STATIC", L"Relative speed multiplier (more means a faster simulation, 1 is a good speed)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 		centerX - 110, 165, 220, 55, hWnd, (HMENU)2, NULL, NULL);
+	hLabel5 = CreateWindowEx(0, L"STATIC", L"Real life meters per pixel (does not affect planet scaling)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
+		centerX - 110, 230, 220, 35, hWnd, (HMENU)2, NULL, NULL);
 	hEdit1 = CreateWindowEx(0, L"EDIT", L"3", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |  ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 10, 60, 20, hWnd, (HMENU)4, NULL, NULL);
 	hEdit2 = CreateWindowEx(0, L"EDIT", L"0.5", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
@@ -367,8 +369,10 @@ void CreateInitialWindows(HWND hWnd) {
 		centerX + 110, 120, 60, 20, hWnd, (HMENU)6, NULL, NULL);
 	hEdit4 = CreateWindowEx(0, L"EDIT", L"1", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 165, 60, 20, hWnd, (HMENU)7, NULL, NULL);
+	hEdit5 = CreateWindowEx(0, L"EDIT", L"1000000", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
+		centerX + 110, 230, 60, 20, hWnd, (HMENU)7, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-		centerX + 110, 230, 60, 30, hWnd, (HMENU)8, NULL, NULL); //ID 8 used in WM_BUTTON
+		centerX + 110, 275, 60, 30, hWnd, (HMENU)8, NULL, NULL); //ID 8 used in WM_BUTTON
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
 	WNDPROC oldProc = (WNDPROC)SetWindowLongPtr(hEdit2, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
 	//if it's our second run, oldProcs will be resized, so we just set index 0 to these.
@@ -481,25 +485,30 @@ bool DestroyIfValid() {
 		char szBuf2[2048];
 		char szBuf3[2048];
 		char szBuf4[2048];
+		char szBuf5[2048];
 		int throwaway1 = GetWindowTextA(hEdit1, szBuf1, GetWindowTextLength(hEdit1) + 1);
 		int throwaway2 = GetWindowTextA(hEdit2, szBuf2, GetWindowTextLength(hEdit2) + 1);
 		int throwaway3 = GetWindowTextA(hEdit3, szBuf3, GetWindowTextLength(hEdit3) + 1);
 		int throwaway4 = GetWindowTextA(hEdit4, szBuf4, GetWindowTextLength(hEdit4) + 1);
+		int throwaway5 = GetWindowTextA(hEdit5, szBuf5, GetWindowTextLength(hEdit5) + 1);
 		numPlanets = std::stoi(std::string(szBuf1));
 		fpss = std::stof(std::string(szBuf2));
 		simLength = std::stof(std::string(szBuf3)); //in seconds
 		relativeSpeed = std::stof(std::string(szBuf4));
+		metersPerPixel = std::stof(std::string(szBuf5));
 		solveIVP = new Calculations(
-			numPlanets, fpss, simLength, relativeSpeed
+			numPlanets, fpss, simLength, relativeSpeed, metersPerPixel
 		);
 		DestroyWindow(hLabel1);
 		DestroyWindow(hLabel2);
 		DestroyWindow(hLabel3);
 		DestroyWindow(hLabel4);
+		DestroyWindow(hLabel5);
 		DestroyWindow(hEdit1);
 		DestroyWindow(hEdit2);
 		DestroyWindow(hEdit3);
 		DestroyWindow(hEdit4);
+		DestroyWindow(hEdit5);
 		oldProcs.erase(oldProcs.begin());
 		oldProcs.erase(oldProcs.begin());
 		oldProcs.erase(oldProcs.begin());
@@ -768,7 +777,6 @@ void StartSimulation(HWND hWnd) {
 		planetPens.push_back(std::make_unique<Gdiplus::Pen>(c, 1.5f));
 	}
 	currStep = 0;
-	solveIVP->setMetersPerPixel(metersPerPixel);
 	solveIVP->setInitialValues(initialVals);
 	simulationResult = solveIVP->solve();
 	totalSteps = simulationResult[0].size();
