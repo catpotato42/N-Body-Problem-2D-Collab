@@ -240,7 +240,7 @@ LRESULT CALLBACK ProcessMessages(
 			if (nextPhase) {
 				StartSimulation(hWnd);
 				hFrameTracker = CreateWindowEx(0, L"STATIC", L"Current Frame: " + (char)currStep, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
-					0, 0, 170, 25, hWnd, (HMENU)1, NULL, NULL);
+					0, 0, 200, 20, hWnd, (HMENU)1, NULL, NULL);
 				//hPositionDisplay = CreateWindowEx(0, L"STATIC", L"Current pos: ", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
 				//	0, 35, 200, 70, hWnd, (HMENU)1, NULL, NULL);
 				currPhase = SIMULATION; //after bc can't draw w/out knowing output values
@@ -348,7 +348,7 @@ LRESULT CALLBACK CustomEditProc(HWND hEdit, UINT msg, WPARAM wParam, LPARAM lPar
 }
 
 void CreateInitialWindows(HWND hWnd) {
-	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE.
+	//Create ctrls. ORDER OF TEXT BOXES IS IMPORTANT HERE because of the way I'm finding the distance between labels (add previous y + 10, easier when it's on one line up).
 	//I know these locations should be variables in the global context, as the error msg positioning y value depends on how large these windows are (it's equal to hButton y).
 	//However just don't add new controls and it will all be fine.
 	hLabel1 = CreateWindowEx(0, L"STATIC", L"# of Planets (2-15)", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER,
@@ -370,7 +370,7 @@ void CreateInitialWindows(HWND hWnd) {
 	hEdit4 = CreateWindowEx(0, L"EDIT", L"1", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
 		centerX + 110, 165, 60, 20, hWnd, (HMENU)7, NULL, NULL);
 	hEdit5 = CreateWindowEx(0, L"EDIT", L"1000000", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_RIGHT,
-		centerX + 110, 230, 60, 20, hWnd, (HMENU)7, NULL, NULL);
+		centerX + 110, 230, 80, 20, hWnd, (HMENU)7, NULL, NULL);
 	hButton = CreateWindow(L"BUTTON", L"Create", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
 		centerX + 110, 275, 60, 30, hWnd, (HMENU)8, NULL, NULL); //ID 8 used in WM_BUTTON
 	SetWindowLongPtr(hEdit2, GWLP_USERDATA, 0);
@@ -423,7 +423,7 @@ bool SpecialCaseForDecimals(HWND textBox, int startY) {
 
 bool IsValidNumberEntry(HWND textBox) {
 	if (textBox == hEdit3 || textBox == hEdit2 || textBox == hEdit4) {
-		return SpecialCaseForDecimals(textBox, 230);
+		return SpecialCaseForDecimals(textBox, 275);
 	}
 	int length = GetWindowTextLength(textBox);
 	char szBuf[2048];
