@@ -9,12 +9,13 @@
 5. Input desired fpss (frames per simulation second). This affects the accuracy of the simulation, as 2 fpss will calculate two states every in-simulation second. You can also put decimal values in this field, but only in the form x.xx (there must be a number before the decimal). This just means if you wish for .5 fpss you must enter 0.5. This is true for every input box with capability for decimals. 
 6. Input desired simulation length. This is the length of time the computer will simulate the orbit of the planets for, not the real time the simulation lasts. This is in units of 10,000 seconds.
 7. Input relative speed. This is the frames per 1,000 seconds of simulation we output. So, at 100k seconds (a value of 10 input into Sim Length) a relative speed of 1 gets us (100,000 s calculated / 1,000 s per frame output) * 1 (relative speed) = 100 frames output.
-8. Press Create.
-9. Then, enter initial values (x-pos, y-pos, x-vel, y-vel, mass) for each planet.
-10. Position variables are in pixels from the top left of the screen (positive down and right), which has its width and height printed at the top left when entering initial values. This is not dynamic so resizing the window after the first screen is not recommended. pixels are translated 1 pixel per 1e6 (1 million) meters. 
-11. Velocity is in m/s, + is right/down, - is left/up. a couple thousand should give movement that looks reasonable.
-12. Mass is in 1e24 kg. The gravitational constant is the same as the real world, at 6.6743e-11 m^3/kgs^2.
-13. Press Start Simulation when ready! Don't worry if it says not responding or shows a black screen for more than 30 seconds, just don't click anything for a while. Longer simulations where fpss*simulation length > 1000 may take over a minute to load.
+8. Input meters per pixel. Default is 1,000,000 meters per pixel. The moon is 380 pixels away from the earth at this scale.
+9. Press Create.
+10. Then, enter initial values (x-pos, y-pos, x-vel, y-vel, mass) for each planet.
+11. Position variables are in pixels from the top left of the screen (positive down and right), which has its width and height printed at the top left when entering initial values. This is not dynamic so resizing the window after the first screen is not recommended. pixels are translated 1 pixel per 1e6 (1 million) meters. 
+12. Velocity is in m/s, + is right/down, - is left/up. a couple thousand should give movement that looks reasonable.
+13. Mass is in 1e24 kg. The gravitational constant is the same as the real world, at 6.6743e-11 m^3/kgs^2.
+14. Press Start Simulation when ready! Don't worry if it says not responding or shows a black screen for more than 30 seconds, just don't click anything for a while. Longer simulations where fpss*simulation length > 1000 may take over a minute to load.
 
 ### Notes
 Simulation speed is much higher than the real world (1,000 seconds per each real-world frame at a Relative Speed of 1)
