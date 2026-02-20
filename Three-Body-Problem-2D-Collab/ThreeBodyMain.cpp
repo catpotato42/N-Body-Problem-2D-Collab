@@ -765,6 +765,8 @@ void StartSimulation(HWND hWnd) {
 		DestroyWindow(hErrorMsg);
 	}
 	DestroyWindow(hStartSimButton);
+	planetBrushes.clear();
+	planetPens.clear();
 	std::vector<COLORREF> rgbValues =
 	{ RGB(0, 102, 204),  RGB(204, 0, 0), RGB(0, 255, 0), RGB(0, 204, 204), RGB(204, 0, 204), RGB(255, 255, 255),
 		RGB(204, 0, 102), RGB(102, 0, 204), RGB(0, 204, 102), RGB(0, 0, 204), RGB(102, 0, 0), RGB(0, 102, 51),
