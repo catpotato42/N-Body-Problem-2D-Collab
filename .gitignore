@@ -6,7 +6,7 @@
 *.aps
 *.bsc
 *.sbr
-#*.pdb
+*.pdb
 *.ilk
 *.obj
 *.res
@@ -17,7 +17,7 @@
 *.exp
 *.lib
 *.dll
-#*.exe
+*.exe
 *.manifest
 *.sdf
 *.opensdf
